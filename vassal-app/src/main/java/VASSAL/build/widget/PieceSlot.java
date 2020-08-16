@@ -14,10 +14,11 @@
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, copies are available
  * at http://www.opensource.org.
- * 
+ *
  */
 package VASSAL.build.widget;
 
+import VASSAL.tools.ProblemDialog;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -27,7 +28,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.dnd.DnDConstants;
-import java.awt.dnd.DragGestureEvent;
 import java.awt.dnd.DragGestureListener;
 import java.awt.dnd.DragSource;
 import java.awt.event.KeyEvent;
@@ -37,7 +37,6 @@ import java.awt.event.MouseListener;
 import java.awt.geom.AffineTransform;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-import javax.swing.KeyStroke;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
@@ -50,7 +49,6 @@ import VASSAL.build.Widget;
 import VASSAL.build.module.Map;
 import VASSAL.build.module.documentation.HelpFile;
 import VASSAL.build.module.documentation.HelpWindow;
-import VASSAL.build.module.documentation.HelpWindowExtension;
 import VASSAL.build.module.map.MenuDisplayer;
 import VASSAL.build.module.map.PieceMover.AbstractDragHandler;
 import VASSAL.command.AddPiece;
@@ -79,10 +77,9 @@ public class PieceSlot extends Widget implements MouseListener, KeyListener {
   public static final String GP_ID = "gpid";
   protected GamePiece c;
   protected GamePiece expanded;
-  protected String name;
   protected String pieceDefinition;
-  protected static Font FONT = new Font("Dialog", 0, 12);
-  protected JPanel panel;
+  protected static final Font FONT = new Font("Dialog", Font.PLAIN, 12);
+  protected final JPanel panel;
   protected int width, height;
   protected String gpId = ""; // Unique PieceSlot Id
   protected GpIdSupport gpidSupport;
@@ -101,19 +98,19 @@ public class PieceSlot extends Widget implements MouseListener, KeyListener {
   public PieceSlot(CardSlot card) {
     this((PieceSlot) card);
   }
-  
-  
-  // If we're a child of a piece widget that allows scale control, get our scale from that. Otherwise default to 1.0 
+
+
+  // If we're a child of a piece widget that allows scale control, get our scale from that. Otherwise default to 1.0
   public double getScale() {
     Widget w = this;
     while ((w = w.getParent()) != null) {
       if (w.hasScale()) {
         return w.getScale();
       }
-    }    
+    }
     return 1.0;
   }
-  
+
 
   protected void copyFrom(PieceSlot piece) {
     c = piece.c;
@@ -125,7 +122,7 @@ public class PieceSlot extends Widget implements MouseListener, KeyListener {
 
   public class Panel extends JPanel {
     private static final long serialVersionUID = 1L;
-    protected PieceSlot pieceSlot;
+    protected final PieceSlot pieceSlot;
 
     public Panel(PieceSlot slot) {
       super();
@@ -236,8 +233,8 @@ public class PieceSlot extends Widget implements MouseListener, KeyListener {
       g.drawRect(0, 0, size.width - 1, size.height - 1);
       g.setFont(FONT.deriveFont((float)(FONT.getSize() * os_scale)));
       g.drawString(" nil ",
-        size.width/2 - fm.stringWidth(" nil ")/2,
-        size.height/2
+        size.width / 2 - fm.stringWidth(" nil ") / 2,
+        size.height / 2
       );
     }
     else {
@@ -256,10 +253,10 @@ public class PieceSlot extends Widget implements MouseListener, KeyListener {
   }
 
   public Dimension getPreferredSize() {
-    // Preferred size is affected by our module-specified scale 
+    // Preferred size is affected by our module-specified scale
     if (c != null && panel.getGraphics() != null) {
       Dimension bound = c.boundingBox().getSize();
-      bound.width = (int) ((double)bound.width * getScale()); 
+      bound.width = (int) ((double)bound.width * getScale());
       bound.height = (int) ((double)bound.height * getScale());
       return bound;
     }
@@ -425,20 +422,17 @@ public class PieceSlot extends Widget implements MouseListener, KeyListener {
 
   @Override
   public void addTo(Buildable par) {
-    // Need to "keep our Widgets in a row" for scale purposes 
+    // Need to "keep our Widgets in a row" for scale purposes
     if (par instanceof Widget) {
       parent = (Widget)par;
     }
-    
+
     panel.setDropTarget(AbstractDragHandler.makeDropTarget(panel, DnDConstants.ACTION_MOVE, null));
 
-    DragGestureListener dragGestureListener = new DragGestureListener() {
-      @Override
-      public void dragGestureRecognized(DragGestureEvent dge) {
-        if (SwingUtils.isDragTrigger(dge)) {
-          startDrag();
-          AbstractDragHandler.getTheDragHandler().dragGestureRecognized(dge);
-        }
+    DragGestureListener dragGestureListener = dge -> {
+      if (SwingUtils.isDragTrigger(dge)) {
+        startDrag();
+        AbstractDragHandler.getTheDragHandler().dragGestureRecognized(dge);
       }
     };
 
@@ -454,7 +448,7 @@ public class PieceSlot extends Widget implements MouseListener, KeyListener {
     if (s != null) {
       el.setAttribute(NAME, s);
     }
-    el.setAttribute(GP_ID, gpId+"");
+    el.setAttribute(GP_ID, gpId + "");
     el.setAttribute(WIDTH, getPreferredSize().width + "");
     el.setAttribute(HEIGHT, getPreferredSize().height + "");
 
@@ -592,19 +586,13 @@ public class PieceSlot extends Widget implements MouseListener, KeyListener {
     gpId = id;
   }
 
-  private static class MyConfigurer extends Configurer implements HelpWindowExtension {
-    private PieceDefiner definer;
+  private static class MyConfigurer extends Configurer {
+    private final PieceDefiner definer;
 
     public MyConfigurer(PieceSlot slot) {
       super(null, slot.getConfigureName(), slot);
       definer = new PieceDefiner(slot.getGpId(), slot.gpidSupport);
       definer.setPiece(slot.getPiece());
-    }
-
-    // TODO deprecate HelpWindowExtension interface, then confirm it's not in use anymore and delete
-    @Override
-    @Deprecated
-    public void setBaseWindow(HelpWindow w) {
     }
 
     @Override

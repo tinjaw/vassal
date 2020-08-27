@@ -99,7 +99,7 @@ public class SequenceEncoder {
     }
 
     if (s.charAt(0) == '\\' ||
-        (s.charAt(0) == '\'' && s.charAt(s.length()-1) == '\'')) {
+        (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\'')) {
       buffer.append('\'');
       appendEscapedString(s);
       buffer.append('\'');
@@ -244,12 +244,12 @@ public class SequenceEncoder {
       int i = start;
       for ( ; i < stop; ++i) {
         if (val.charAt(i) == delim) {
-          if (i > 0 && val.charAt(i-1) == '\\') {
+          if (i > 0 && val.charAt(i - 1) == '\\') {
             // escaped delimiter; piece together the token
             if (buf == null) {
               buf = new StringBuilder();
             }
-            buf.append(val, start, i-1);
+            buf.append(val, start, i - 1);
             start = i;
           }
           else {
@@ -262,7 +262,7 @@ public class SequenceEncoder {
               // had an earlier escape; cobble on the end
               buf.append(val, start, i);
             }
-            start = i+1;
+            start = i + 1;
             break;
           }
         }
@@ -288,7 +288,7 @@ public class SequenceEncoder {
       // strip enclosure by single quotes
       final int len = cs.length();
       return (
-        len > 1 && cs.charAt(0) == '\'' && cs.charAt(len) == '\'' ?
+        len > 1 && cs.charAt(0) == '\'' && cs.charAt(len - 1) == '\'' ?
         cs.subSequence(1, len - 1) : cs
       ).toString();
     }

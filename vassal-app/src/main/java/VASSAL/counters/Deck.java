@@ -34,6 +34,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -181,7 +182,7 @@ public class Deck extends Stack implements PlayerRoster.SideChangeListener {
   /**
    * @deprecated use {@link #Deck(GameModule, String)}
    */
-  @Deprecated(since="2020-08-06", forRemoval = true)
+  @Deprecated(since = "2020-08-06", forRemoval = true)
   public Deck(String type) {
     this(GameModule.getGameModule(), type);
     ProblemDialog.showDeprecated("2020-08-06");
@@ -190,7 +191,7 @@ public class Deck extends Stack implements PlayerRoster.SideChangeListener {
   /**
    * @deprecated use {@link #Deck(GameModule, String, PropertySource)}
    */
-  @Deprecated(since="2020-08-06", forRemoval = true)
+  @Deprecated(since = "2020-08-06", forRemoval = true)
   public Deck(String type, PropertySource source) {
     this(GameModule.getGameModule(), type, source);
     ProblemDialog.showDeprecated("2020-08-06");
@@ -680,7 +681,7 @@ public class Deck extends Stack implements PlayerRoster.SideChangeListener {
     hotkeyOnEmpty = b;
   }
 
-  @Deprecated(since="2020-08-06", forRemoval = true)
+  @Deprecated(since = "2020-08-06", forRemoval = true)
   public KeyStroke getEmptyKey() {
     ProblemDialog.showDeprecated("2020-08-06");
     return emptyKey.getKeyStroke();
@@ -690,7 +691,7 @@ public class Deck extends Stack implements PlayerRoster.SideChangeListener {
     return emptyKey;
   }
 
-  @Deprecated(since="2020-08-06", forRemoval = true)
+  @Deprecated(since = "2020-08-06", forRemoval = true)
   public void setEmptyKey(KeyStroke k) {
     ProblemDialog.showDeprecated("2020-08-06");
     emptyKey = new NamedKeyStroke(k);
@@ -854,7 +855,7 @@ public class Deck extends Stack implements PlayerRoster.SideChangeListener {
    * Set the contents of this Deck to an Iterator of GamePieces
    * @deprecated Use {@link #setContents(Collection)} instead.
    */
-  @Deprecated(since="2020-08-06", forRemoval = true)
+  @Deprecated(since = "2020-08-06", forRemoval = true)
   protected Command setContents(Iterator<GamePiece> it) {
     ProblemDialog.showDeprecated("2020-08-06");
     ChangeTracker track = new ChangeTracker(this);
@@ -889,7 +890,7 @@ public class Deck extends Stack implements PlayerRoster.SideChangeListener {
     if (!"null".equals(mapId)) { //$NON-NLS-1$
       m = Map.getMapById(mapId);
       if (m == null) {
-        ErrorDialog.dataError(new BadDataReport("No such map", mapId, null));
+        ErrorDialog.dataWarning(new BadDataReport("No such map", mapId, null));
       }
     }
 
@@ -1394,7 +1395,7 @@ public class Deck extends Stack implements PlayerRoster.SideChangeListener {
       comm = comm.append(new AddPiece(p));
     }
 
-    try (Writer fw = new FileWriter(f);
+    try (Writer fw = new FileWriter(f, StandardCharsets.UTF_8);
          BufferedWriter out = new BufferedWriter(fw)) {
       gameModule.addCommandEncoder(commandEncoder);
       out.write(gameModule.encode(comm));
@@ -1434,7 +1435,7 @@ public class Deck extends Stack implements PlayerRoster.SideChangeListener {
   public Command loadDeck(File f) throws IOException {
     String ds;
 
-    try (Reader fr = new FileReader(f);
+    try (Reader fr = new FileReader(f, StandardCharsets.UTF_8);
          BufferedReader in = new BufferedReader(fr)) {
       ds = IOUtils.toString(in);
     }

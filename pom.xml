@@ -4,7 +4,7 @@
 
     <groupId>org.vassalengine</groupId>
     <artifactId>vassal-parent</artifactId>
-    <version>3.3.4-SNAPSHOT</version>
+    <version>3.5.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Vassal Engine</name>
@@ -19,6 +19,7 @@
     </licenses>
 
     <modules>
+        <module>vassal-deprecation</module>
         <module>vassal-app</module>
         <module>vassal-doc</module>
         <module>release-prepare</module>

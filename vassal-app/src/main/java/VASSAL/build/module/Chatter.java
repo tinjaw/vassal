@@ -36,6 +36,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
@@ -45,6 +46,7 @@ import VASSAL.build.Buildable;
 import VASSAL.build.GameModule;
 import VASSAL.command.Command;
 import VASSAL.command.CommandEncoder;
+import VASSAL.configure.BooleanConfigurer;
 import VASSAL.configure.ColorConfigurer;
 import VASSAL.configure.FontConfigurer;
 import VASSAL.i18n.Resources;
@@ -189,11 +191,25 @@ public class Chatter extends JPanel implements CommandEncoder, Buildable {
   public void consoleHook(String s, String style, boolean html_allowed) {
     
   }
+  
 
   /**
-   * Display a message in the text area
+   * Display a message in the text area. Ensures we execute in the EDT
    */
-  public void show(String s) {
+  public void show(String s) {  
+    if (SwingUtilities.isEventDispatchThread()) {
+      doShow(s);
+    }
+    else {
+      SwingUtilities.invokeLater(() -> doShow(s));
+    }      
+  }
+
+
+  /**
+   * Display a message in the text area - use show() from outside the class - MUST run on EventDispatchThread
+   */
+  private void doShow(String s) {
     String style;
     boolean html_allowed;
 
@@ -351,8 +367,6 @@ public class Chatter extends JPanel implements CommandEncoder, Buildable {
         f = myFont;
       }
     }
-    addStyle("body",    f, gameMsg,   "",     0);
-    addStyle("p",       f, gameMsg,   "",     0);
     addStyle(".msg",    f, gameMsg,   "",     0);
     addStyle(".msg2",   f, gameMsg2,  "",     0);
     addStyle(".msg3",   f, gameMsg3,  "",     0);
@@ -504,16 +518,17 @@ public class Chatter extends JPanel implements CommandEncoder, Buildable {
     systemMsg = (Color) globalPrefs.getValue(SYS_MSG_COLOR);
 
 
-    final ColorConfigurer myChatColor = new ColorConfigurer( MY_CHAT_COLOR,
-                                                             Resources.getString("Chatter.my_text_preference"), new Color(9, 32, 229) );
+    final ColorConfigurer myChatColor = new ColorConfigurer(
+      MY_CHAT_COLOR,
+      Resources.getString("Chatter.my_text_preference"),
+      new Color(9, 32, 229));
 
     myChatColor.addPropertyChangeListener(e -> {
       myChat = (Color) e.getNewValue();
       makeStyleSheet(null);
     });
 
-    globalPrefs.addOption( Resources.getString("Chatter.chat_window"),
-                           myChatColor );
+    globalPrefs.addOption(Resources.getString("Chatter.chat_window"), myChatColor);
 
     myChat = (Color) globalPrefs.getValue(MY_CHAT_COLOR);    
 
@@ -526,8 +541,14 @@ public class Chatter extends JPanel implements CommandEncoder, Buildable {
       makeStyleSheet(null);
     });
 
-    globalPrefs.addOption( Resources.getString("Chatter.chat_window"), otherChatColor );      
+    globalPrefs.addOption(Resources.getString("Chatter.chat_window"), otherChatColor);
     otherChat = (Color) globalPrefs.getValue(OTHER_CHAT_COLOR);
+    
+    // Put up the HTML Enable/Disable checkbox if we're supposed to have it.
+    if (GlobalOptions.PROMPT.equals(GlobalOptions.getInstance().chatterHTMLSetting())) {
+      BooleanConfigurer config2 = new BooleanConfigurer(GlobalOptions.CHATTER_HTML_SUPPORT, Resources.getString("GlobalOptions.chatter_html_support")); //$NON-NLS-1$
+      globalPrefs.addOption(Resources.getString("Chatter.chat_window"), config2);        
+    }
 
     makeStyleSheet(myFont);
   }
@@ -555,17 +576,29 @@ public class Chatter extends JPanel implements CommandEncoder, Buildable {
       return null;
     }
   }
-
+  
+  
   /**
    * Displays the message, Also logs and sends to the server a {@link Command}
-   * that displays this message
+   * that displays this message. 
    */
-  public void send(String msg) {
+  public void send(String msg) {    
     if (msg != null && !msg.isEmpty()) {
       show(msg);
       GameModule.getGameModule().sendAndLog(new DisplayText(this, msg));
     }
   }
+  
+  
+  
+  /**
+   * Warning message method -- same as send, but accepts messages from static methods. For reporting soft-fail problems in modules.  
+   */
+  public static void warning(String msg) {
+    Chatter chatter = GameModule.getGameModule().getChatter();
+    chatter.send(msg);
+  }
+  
 
   /**
    * Classes other than the Chatter itself may forward KeyEvents to the Chatter by

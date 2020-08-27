@@ -707,7 +707,10 @@ public class GameState implements CommandEncoder {
     String moduleName = GameModule.getGameModule().getAttributeValueString(GameModule.MODULE_NAME);
     String moduleVersion = GameModule.getGameModule().getAttributeValueString(GameModule.MODULE_VERSION);
     cond = new ConditionalCommand.Lt(GameModule.MODULE_VERSION, moduleVersion);
-    c.append(new ConditionalCommand(new ConditionalCommand.Condition[]{cond}, new AlertCommand(Resources.getString("GameState.version_mismatch2", moduleName, moduleVersion ))));  //$NON-NLS-1$
+    c.append(
+      new ConditionalCommand(
+        new ConditionalCommand.Condition[]{cond},
+        new AlertCommand(Resources.getString("GameState.version_mismatch2", moduleName, moduleVersion))));  //$NON-NLS-1$
     return c;
   }
 
@@ -746,19 +749,17 @@ public class GameState implements CommandEncoder {
     GameModule.getGameModule().warn(Resources.getString("GameState.saving_game"));  //$NON-NLS-1$
 // FIXME: Extremely inefficient! Write directly to ZipArchive OutputStream
     final String save = saveString();
-    final FastByteArrayOutputStream ba = new FastByteArrayOutputStream();
-    try (OutputStream out = new ObfuscatingOutputStream(ba)) {
-      out.write(save.getBytes(StandardCharsets.UTF_8));
-    }
-
     try (FileArchive archive = new ZipArchive(f)) {
-      archive.add(SAVEFILE_ZIP_ENTRY, ba.toInputStream());
+      try (final OutputStream zout = archive.getOutputStream(SAVEFILE_ZIP_ENTRY);
+           final OutputStream out = new ObfuscatingOutputStream(zout)) {
+        out.write(save.getBytes(StandardCharsets.UTF_8));
+      }
       (new SaveMetaData()).save(archive);
     }
 
     Launcher.getInstance().sendSaveCmd(f);
 
-    setModified(false);
+    lastSave = save;
     GameModule.getGameModule().warn(Resources.getString("GameState.game_saved"));  //$NON-NLS-1$
   }
 

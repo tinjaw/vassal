@@ -18,6 +18,8 @@
 
 package VASSAL.launch;
 
+import java.nio.charset.StandardCharsets;
+
 import VASSAL.tools.concurrent.listener.EventListener;
 import VASSAL.tools.image.tilecache.ZipFileImageTiler;
 
@@ -52,7 +54,7 @@ class TileProgressPumpStateMachine {
   public static final int DONE    = 5;
 
   protected void appendName(StringBuilder sb, byte[] buf, int beg, int end) {
-    sb.append(new String(buf, beg, end - beg));
+    sb.append(new String(buf, beg, end - beg, StandardCharsets.UTF_8));
   }
 
   protected boolean hasName(StringBuilder sb) {
@@ -199,9 +201,9 @@ class TileProgressPumpStateMachine {
       int[] result;
 
       switch (state) {
-      case NAME:    result = runName(  buf, beg, end, sb); break;
+      case NAME:    result = runName(buf, beg, end, sb); break;
       case NAME_LF: result = runNameLF(buf, beg, end, sb); break;
-      case DOTS:    result = runDots(  buf, beg, end, sb); break;
+      case DOTS:    result = runDots(buf, beg, end, sb); break;
       case DOTS_LF: result = runDotsLF(buf, beg, end, sb); break;
 
       default:

@@ -90,12 +90,14 @@ public class GlobalOptions extends AbstractConfigurable {
   public static final String PLAYER_ID_ALT = "playerId"; //$NON-NLS-1$
   public static final String PLAYER_ID_FORMAT = "playerIdFormat"; //$NON-NLS-1$
 
+  public static final boolean FORCE_MAC_LEGACY = true; //BR// Keeps Mac key translation "waiting in the wings"
+
   private String promptString = "Opponents can unmask my pieces"; //$NON-NLS-1$
   private String nonOwnerUnmaskable = NEVER;
   private String centerOnMoves = PROMPT;
   private String autoReport = ALWAYS;
   private String markMoved = NEVER;
-  private String chatterHTMLSupport = PROMPT; 
+  private String chatterHTMLSupport = NEVER;
   
   private int dragThreshold = 10;
   
@@ -111,7 +113,7 @@ public class GlobalOptions extends AbstractConfigurable {
   private boolean useSingleWindow;
   
   private boolean useClassicMoveFixedDistance = false;
-  private BooleanConfigurer classicMfd;
+  private BooleanConfigurer classicMfd;  
 
   private static void setInstance(GlobalOptions go) {
     instance = go;
@@ -185,7 +187,7 @@ public class GlobalOptions extends AbstractConfigurable {
         Resources.getString("GlobalOptions.classic_mfd"),
         Boolean.FALSE
       );
-    classicMfd.addPropertyChangeListener( evt -> setUseClassicMoveFixedDistance(classicMfd.getValueBoolean()));
+    classicMfd.addPropertyChangeListener(evt -> setUseClassicMoveFixedDistance(classicMfd.getValueBoolean()));
     prefs.addOption(classicMfd);
 
     //BR// Drag Threshold
@@ -205,16 +207,16 @@ public class GlobalOptions extends AbstractConfigurable {
         MAC_LEGACY,
         Resources.getString("GlobalOptions.mac_legacy"),
         Boolean.FALSE);
-    macLegacyConf.addPropertyChangeListener( evt -> setPrefMacLegacy(macLegacyConf.getValueBoolean()));
-    
-    if (SystemUtils.IS_OS_MAC_OSX) { 
+    macLegacyConf.addPropertyChangeListener(evt -> setPrefMacLegacy(macLegacyConf.getValueBoolean()));
+
+    if (!FORCE_MAC_LEGACY && SystemUtils.IS_OS_MAC_OSX) {
       // Only need to *display* this preference if we're running on a Mac.
       prefs.addOption(macLegacyConf);
     }
     
     BooleanConfigurer config = new BooleanConfigurer(CENTER_ON_MOVE, Resources.getString("GlobalOptions.center_on_move"), Boolean.TRUE); //$NON-NLS-1$
     prefs.addOption(config);
-    
+       
     validator = new SingleChildInstance(gm, getClass());
   }
 
@@ -497,6 +499,10 @@ public class GlobalOptions extends AbstractConfigurable {
 
   public boolean centerOnOpponentsMove() {
     return Boolean.TRUE.equals(GameModule.getGameModule().getPrefs().getValue(CENTER_ON_MOVE));
+  }
+  
+  public String chatterHTMLSetting() {
+    return chatterHTMLSupport;
   }
   
   public boolean chatterHTMLSupport() {

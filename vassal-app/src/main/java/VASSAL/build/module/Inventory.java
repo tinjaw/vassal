@@ -37,6 +37,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -414,7 +415,8 @@ public class Inventory extends AbstractConfigurable
     // .substring(1).replaceAll(
   //      mapSeparator, System.getProperty("line.separator"));
 
-    try (Writer fw = new FileWriter(file);
+    // Writing out a text file for the user to do whatever with. Use the native encoding.
+    try (Writer fw = new FileWriter(file, Charset.defaultCharset());
          BufferedWriter bw = new BufferedWriter(fw);
          PrintWriter p = new PrintWriter(bw)) {
       p.print(output);
@@ -1455,7 +1457,7 @@ public class Inventory extends AbstractConfigurable
         found = Integer.parseInt(key.substring(start, match.end()));
 
         // Check for sign
-        if ( (start > 0) && (key.charAt(start - 1) == '-') ) {
+        if ((start > 0) && (key.charAt(start - 1) == '-')) {
           // negative integer found
           // FIXME: Is this a safe operation? What happens when
           // MAX_VALUE * -1 < MIN_VALUE?

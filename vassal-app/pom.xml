@@ -5,11 +5,11 @@
     <parent>
         <groupId>org.vassalengine</groupId>
         <artifactId>vassal-parent</artifactId>
-        <version>3.3.4-SNAPSHOT</version>
+        <version>3.5.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>vassal-app</artifactId>
-    <version>3.3.4-SNAPSHOT</version>
+    <version>3.5.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>${project.artifactId}</name>
@@ -129,6 +129,12 @@
             <artifactId>maven-artifact</artifactId>
             <version>3.6.3</version>
         </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>vassal-deprecation</artifactId>
+            <version>${project.version}</version>
+            <optional>true</optional>
+        </dependency>
 
         <!-- Test Dependencies -->
         <dependency>
@@ -223,6 +229,9 @@
                     </compilerArgs>
                     <showDeprecation>true</showDeprecation>
                     <showWarnings>false</showWarnings>
+                    <annotationProcessors>
+                        <annotationProcessor>org.vassalengine.deprecation.DeprecationProcessor</annotationProcessor>
+                    </annotationProcessors>
                 </configuration>
             </plugin>
             <plugin>

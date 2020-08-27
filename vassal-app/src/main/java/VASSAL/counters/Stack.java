@@ -80,7 +80,7 @@ public class Stack implements GamePiece, StateMergeable {
    *         won't affect it.
    * @deprecated use {@link #asList()}
    */
-  @Deprecated(since="2020-08-06", forRemoval = true)
+  @Deprecated(since = "2020-08-06", forRemoval = true)
   public Enumeration<GamePiece> getPieces() {
     ProblemDialog.showDeprecated("2020-08-06");
     return new EnumeratedIterator<>(new AllPieceIterator());
@@ -109,7 +109,7 @@ public class Stack implements GamePiece, StateMergeable {
    * @return Reverse order Enumerator
    * @deprecated Use {@link #getPiecesInVisibleOrderIterator()}
    */
-  @Deprecated(since="2020-08-06", forRemoval = true)
+  @Deprecated(since = "2020-08-06", forRemoval = true)
   public Enumeration<GamePiece> getPiecesInReverseOrder() {
     ProblemDialog.showDeprecated("2020-08-06");
     return new EnumeratedIterator<>(new ReversePieceIterator());
@@ -126,7 +126,7 @@ public class Stack implements GamePiece, StateMergeable {
    * from the top to the bottom.
    * @deprecated Use {@link #getPiecesInVisibleOrderIterator()}
    */
-  @Deprecated(since="2020-08-06", forRemoval = true)
+  @Deprecated(since = "2020-08-06", forRemoval = true)
   public Enumeration<GamePiece> getPiecesInVisibleOrder() {
     ProblemDialog.showDeprecated("2020-08-06");
     return new EnumeratedIterator<>(new VisibleOrderIterator());
@@ -494,7 +494,7 @@ public class Stack implements GamePiece, StateMergeable {
     if (!"null".equals(mapId)) { //$NON-NLS-1$//
       m = Map.getMapById(mapId);
       if (m == null) {
-        ErrorDialog.dataError(new BadDataReport("Could not find map", mapId, null));
+        ErrorDialog.dataWarning(new BadDataReport("Could not find map", mapId, null));
       }
     }
 
@@ -613,7 +613,7 @@ public class Stack implements GamePiece, StateMergeable {
   @Override
   public void setParent(Stack s) {
     if (s != null) {
-      ErrorDialog.dataError(new BadDataReport("Cannot add stack to another stack", toString(), null));
+      ErrorDialog.dataWarning(new BadDataReport("Cannot add stack to another stack", toString(), null));
     }
   }
 

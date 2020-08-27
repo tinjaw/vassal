@@ -36,6 +36,7 @@ import java.io.FileReader;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -218,9 +219,9 @@ public class SymbolSet extends Importer {
      */
     private BufferedImage getImage(Rectangle rect2) {
       if (img == null) {
-        if ( isMask && (rect.width <= 0 || rect.height <= 0
+        if (isMask && (rect.width <= 0 || rect.height <= 0
             || rect.width + rect.x > bitmap.getWidth()
-            || rect.height + rect.y > bitmap.getHeight() )) {
+            || rect.height + rect.y > bitmap.getHeight())) {
           // Images with invalid masks appear to be completely transparent.
           // This is a hassle generating new ones all the time, but there's nothing
           // to say that the real mask can't be different sizes at every call,
@@ -586,7 +587,7 @@ public class SymbolSet extends Importer {
     sdx = action.getCaseInsensitiveFile(sdx, f, false, null);
     if (sdx != null) { // must reorder image indeces
 
-      try (Reader fr = new FileReader(sdx);
+      try (Reader fr = new FileReader(sdx, StandardCharsets.US_ASCII);
            BufferedReader input = new BufferedReader(fr)) {
 
         final SymbolData[] pieces = Arrays.copyOf(gamePieceData, gamePieceData.length);

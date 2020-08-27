@@ -43,6 +43,7 @@ import VASSAL.build.module.Chatter;
 import VASSAL.build.module.Map;
 import VASSAL.build.module.documentation.HelpFile;
 import VASSAL.build.module.map.boardPicker.Board;
+import VASSAL.build.module.map.boardPicker.board.MapGrid;
 import VASSAL.build.module.map.boardPicker.board.MapGrid.BadCoords;
 import VASSAL.build.module.map.boardPicker.board.Region;
 import VASSAL.build.module.map.boardPicker.board.mapgrid.Zone;
@@ -196,7 +197,7 @@ public class SendToLocation extends Decorator implements TranslatablePiece {
       else {
         Point p = getSendLocation();
         c.setEnabled(getMap() != null && p != null &&
-            (map != getMap() || !p.equals(getPosition())) );
+            (map != getMap() || !p.equals(getPosition())));
       }
     }
     return command;
@@ -207,7 +208,7 @@ public class SendToLocation extends Decorator implements TranslatablePiece {
     if (getMap() == null) {
       s += "getMap is null";
     }
-    else if ( p == null) {
+    else if (p == null) {
       s += "p is null";
     }
     else {
@@ -285,10 +286,16 @@ public class SendToLocation extends Decorator implements TranslatablePiece {
         switch (destination.charAt(0)) {
         case 'G':
           b = map.getBoardByName(boardName.getText(outer));
-          if (b != null ) {
+          if (b != null) {
             try {
-              dest = b.getGrid().getLocation(gridLocation.getText(outer));
-              if (dest != null)  dest.translate(b.bounds().x, b.bounds().y);
+              MapGrid g = b.getGrid(); 
+              if (g != null) { // Board may not have a grid assigned.
+                dest = g.getLocation(gridLocation.getText(outer));
+                if (dest != null)  dest.translate(b.bounds().x, b.bounds().y);
+              } 
+              else {
+                reportDataError(this, Resources.getString("Error.no_grid_assigned"), map.getMapName());
+              }
             }
             catch (BadCoords e) {
               LogBadGridLocation(dest);

@@ -18,6 +18,7 @@
 package VASSAL.build.module;
 
 import VASSAL.tools.ProblemDialog;
+import static java.lang.Math.round;
 import java.awt.AWTEventMulticaster;
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -91,6 +92,7 @@ import VASSAL.build.module.map.CounterDetailViewer;
 import VASSAL.build.module.map.DefaultPieceCollection;
 import VASSAL.build.module.map.DrawPile;
 import VASSAL.build.module.map.Drawable;
+import VASSAL.build.module.map.Flare;
 import VASSAL.build.module.map.ForwardToChatter;
 import VASSAL.build.module.map.ForwardToKeyBuffer;
 import VASSAL.build.module.map.GlobalMap;
@@ -250,8 +252,8 @@ public class Map extends AbstractConfigurable implements GameComponent, MouseLis
     toolBar.setAlignmentX(0.0F);
     toolBar.setFloatable(false);
   }
-  
-  
+
+
   public Component getComponent() {
     return theMap;
   }
@@ -518,7 +520,8 @@ public class Map extends AbstractConfigurable implements GameComponent, MouseLis
       addChild(new KeyBufferer());
       addChild(new ImageSaver());
       addChild(new CounterDetailViewer());
-      setMapName("Main Map");
+      addChild(new Flare());
+      setMapName(Resources.getString("Map.main_map"));
     }
     if (getComponentsOf(GlobalProperties.class).isEmpty()) {
       addChild(new GlobalProperties());
@@ -528,6 +531,9 @@ public class Map extends AbstractConfigurable implements GameComponent, MouseLis
     }
     if (getComponentsOf(HighlightLastMoved.class).isEmpty()) {
       addChild(new HighlightLastMoved());
+    }
+    if (getComponentsOf(Flare.class).isEmpty()) {
+      addChild(new Flare());
     }
     setup(false);
   }
@@ -714,7 +720,7 @@ public class Map extends AbstractConfigurable implements GameComponent, MouseLis
     );
 
     g.getPrefs().addOption(
-      Resources.getString("Prefs.general_tab"), //$NON-NLS-1$
+      Resources.getString("Prefs.compatibility_tab"), //$NON-NLS-1$
       new BooleanConfigurer(
         MOVING_STACKS_PICKUP_UNITS,
         Resources.getString("Map.moving_stacks_preference"), //$NON-NLS-1$
@@ -798,8 +804,9 @@ public class Map extends AbstractConfigurable implements GameComponent, MouseLis
       MapGrid grid = b.getGrid();
       if (grid instanceof ZonedGrid) {
         Rectangle r = b.bounds();
-        p.translate(-r.x, -r.y);  // Translate to Board co-ords
-        return ((ZonedGrid) grid).findZone(p);
+        Point pos = new Point(p);
+        pos.translate(-r.x, -r.y);  // Translate to Board co-ords
+        return ((ZonedGrid) grid).findZone(pos);
       }
     }
     return null;
@@ -2231,10 +2238,41 @@ public class Map extends AbstractConfigurable implements GameComponent, MouseLis
   /** Ensure that the given region (in map coordinates) is visible */
   public void ensureVisible(Rectangle r) {
     if (scroll != null) {
+      boolean bTriggerRecenter = false;
       final Point p = mapToComponent(r.getLocation());
-      r = new Rectangle(p.x, p.y,
-            (int) (getZoom() * r.width), (int) (getZoom() * r.height));
-      theMap.scrollRectToVisible(r);
+      final Rectangle rCurrent = theMap.getVisibleRect();
+      Rectangle rNorecenter = new Rectangle(0, 0);
+
+      // If r is already visible decide if unit is close enough to
+      // border to justify a recenter
+
+      // Close enough means a strip of the window along the edges whose
+      // width is a % of the edge to center of the window
+
+      // The % is defined in GlobalOptions.CENTER_ON_MOVE_SENSITIVITY
+      final double noRecenterPct = (100.0 - GlobalOptions.getInstance().centerOnOpponentsMoveSensitivity()) / 100.0;
+
+      // if r is within a band of  n%width/height of border, trigger recenter
+      rNorecenter.width = (int) round(rCurrent.width * noRecenterPct);
+      rNorecenter.height = (int) round(rCurrent.height * noRecenterPct);
+      rNorecenter.x = rCurrent.x + (int) round(rCurrent.width - rNorecenter.width) / 2;
+      rNorecenter.y = rCurrent.y + (int) round(rCurrent.height - rNorecenter.height) / 2;
+
+      bTriggerRecenter = p.x < rNorecenter.x || p.x > (rNorecenter.x + rNorecenter.width) ||
+        p.y < rNorecenter.y || p.y > (rNorecenter.y + rNorecenter.height);
+
+      if (bTriggerRecenter) {
+        r.x = p.x - rCurrent.width / 2;
+        r.y = p.y - rCurrent.height / 2;
+        r.width = rCurrent.width;
+        r.height = rCurrent.height;
+
+        final Dimension d = getPreferredSize();
+        if (r.x + r.width > d.width) r.x = d.width - r.width;
+        if (r.y + r.height > d.height) r.y = d.height - r.height;
+
+        theMap.scrollRectToVisible(r);
+      }
     }
   }
 
@@ -2273,7 +2311,7 @@ public class Map extends AbstractConfigurable implements GameComponent, MouseLis
 
   @Override
   public HelpFile getHelpFile() {
-    return HelpFile.getReferenceManualPage("Map.htm"); //$NON-NLS-1$
+    return HelpFile.getReferenceManualPage("Map.html"); //$NON-NLS-1$
   }
 
   @Override
@@ -2462,7 +2500,7 @@ public class Map extends AbstractConfigurable implements GameComponent, MouseLis
   public Class<?>[] getAllowableConfigureComponents() {
     return new Class<?>[]{ GlobalMap.class, LOS_Thread.class, ToolbarMenu.class, MultiActionButton.class, HidePiecesButton.class, Zoomer.class,
       CounterDetailViewer.class, HighlightLastMoved.class, LayeredPieceCollection.class, ImageSaver.class, TextSaver.class, DrawPile.class, SetupStack.class,
-      MassKeyCommand.class, MapShader.class, PieceRecenterer.class };
+      MassKeyCommand.class, MapShader.class, PieceRecenterer.class, Flare.class };
   }
 
   @Override

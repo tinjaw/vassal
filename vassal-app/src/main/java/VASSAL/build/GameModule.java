@@ -22,14 +22,17 @@ import VASSAL.build.module.GameRefresher;
 import VASSAL.build.module.KeyNamer;
 import VASSAL.build.module.PluginsLoader;
 import VASSAL.build.module.gamepieceimage.GamePieceImageDefinitions;
+import VASSAL.build.module.metadata.AbstractMetaData;
+import VASSAL.build.module.metadata.MetaDataFactory;
 import VASSAL.build.module.properties.GlobalProperties;
 import VASSAL.chat.AddressBookServerConfigurer;
 import VASSAL.chat.ChatServerFactory;
 import VASSAL.chat.DynamicClient;
-import VASSAL.chat.DynamicClientFactory;
 import VASSAL.chat.HybridClient;
 import VASSAL.chat.jabber.JabberClientFactory;
 import VASSAL.chat.node.NodeClientFactory;
+import VASSAL.chat.node.OfficialNodeClientFactory;
+import VASSAL.chat.node.PrivateNodeClientFactory;
 import VASSAL.chat.peer2peer.P2PClientFactory;
 import VASSAL.chat.ui.ChatServerControls;
 import VASSAL.configure.AutoConfigurer;
@@ -49,6 +52,7 @@ import java.beans.PropertyChangeSupport;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -167,7 +171,8 @@ public class GameModule extends AbstractConfigurable implements CommandEncoder, 
   /** The System property of this name will return a version identifier for the version of VASSAL being run */
   public static final String VASSAL_VERSION_RUNNING = "runningVassalVersion";  //$NON-NLS-1$
   public static final String NEXT_PIECESLOT_ID = "nextPieceSlotId";
-  public static final String BUILDFILE = "buildFile";
+  public static final String BUILDFILE = "buildFile.xml";
+  public static final String BUILDFILE_OLD = "buildFile";
 
   private static char COMMAND_SEPARATOR = KeyEvent.VK_ESCAPE;
 
@@ -337,18 +342,29 @@ public class GameModule extends AbstractConfigurable implements CommandEncoder, 
       build(null);
     }
     else {
+      final AbstractMetaData data = MetaDataFactory.buildMetaData(f);
+      final String properBuildFileName = (VersionUtils.compareVersions(VersionUtils.truncateToMinorVersion(data.getVassalVersion()), "3.5") < 0) ? BUILDFILE_OLD : BUILDFILE;
+
+      if (!(data instanceof ModuleMetaData)) {
+        throw new IOException(
+          Resources.getString("BasicModule.not_a_module"), //$NON-NLS-1$
+          null);
+      }
+
       // existing module
-      try (InputStream inner = darch.getInputStream(BUILDFILE);
+      try (InputStream inner = darch.getInputStream(properBuildFileName);
            BufferedInputStream in = new BufferedInputStream(inner)) {
         final Document doc = Builder.createDocument(in);
         build(doc.getDocumentElement());
       }
-      catch (IOException e) {
-        // FIXME: review error message
-        // FIXME: this should be more specific, to separate the case where
-        // we have failed I/O from when we read ok but have no module
+      catch (FileNotFoundException e) {
         throw new IOException(
-          Resources.getString("BasicModule.not_a_module"), //$NON-NLS-1$
+          Resources.getString("BasicModule.no_buildfile"), //$NON-NLS-1$
+          e);
+      }
+      catch (IOException e) {
+        throw new IOException(
+          Resources.getString("BasicModule.io_error_reading_archive"), //$NON-NLS-1$
           e);
       }
     }
@@ -428,10 +444,13 @@ public class GameModule extends AbstractConfigurable implements CommandEncoder, 
    * Initialize and register our multiplayer server controls
    */
   protected void initServer() {
-    ChatServerFactory.register(NodeClientFactory.NODE_TYPE, new NodeClientFactory());
-    ChatServerFactory.register(DynamicClientFactory.DYNAMIC_TYPE, new DynamicClientFactory());
+    ChatServerFactory.register(OfficialNodeClientFactory.OFFICIAL_TYPE, new OfficialNodeClientFactory());
+    ChatServerFactory.register(PrivateNodeClientFactory.PRIVATE_TYPE, new PrivateNodeClientFactory());
     ChatServerFactory.register(P2PClientFactory.P2P_TYPE, new P2PClientFactory());
     ChatServerFactory.register(JabberClientFactory.JABBER_TYPE, new JabberClientFactory());
+
+    // legacy server used to be stored as node type
+    ChatServerFactory.register(NodeClientFactory.NODE_TYPE, new OfficialNodeClientFactory());
 
     server = new DynamicClient();
     AddressBookServerConfigurer config = new AddressBookServerConfigurer("ServerImpl", "Server", (HybridClient) server);
@@ -1571,6 +1590,8 @@ public class GameModule extends AbstractConfigurable implements CommandEncoder, 
       final String save = buildString();
       writer.addFile(BUILDFILE,
         new ByteArrayInputStream(save.getBytes(StandardCharsets.UTF_8)));
+
+      writer.removeFile(BUILDFILE_OLD); // Don't leave old non-extension buildfile around if we successfully write the new one.     
 
       if (saveAs) writer.saveAs(true);
       else writer.save(true);

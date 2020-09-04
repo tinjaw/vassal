@@ -7,14 +7,18 @@
 * 13336: Incorrect date format in SecretNotesController
 * 13326: Saving a module will default to .vmod, an extension to .vext
 * 13323: Player switching sides now reported in Chat Log
+* 13297: Ability to Deselect a piece with a Key Command (also remove it from
+    its stack)
 * 13296: Flare feature for map
 * 13219: Added KeyNamer for overriding key names
 * 13098: Move Compatibility related preferences on the General tab to a new
     Compatibility tab
 * 12946: Prevent top level required components from being deleted in Editor
 
-3.4.0 - ???
+3.4.0 - 4 September 2020
 
+* 13371: Render text labels directly at the required size rather than
+    rendering at 100% and scaling
 * 13358: Prevent units in Zones setting OldLocationName incorrectly
 * 13356: Game refresher should not copy marker state
 * 13351: SequenceEncoder.Decoder.copy() should use start offset from parent

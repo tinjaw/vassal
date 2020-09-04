@@ -48,6 +48,7 @@ VNUM:=3.5.0
 
 MAVEN_VERSION:=$(VNUM)-SNAPSHOT
 #MAVEN_VERSION:=$(VNUM)-beta1
+#MAVEN_VERSION:=$(VNUM)
 
 JARNAME:=vassal-app-$(MAVEN_VERSION)
 
@@ -79,7 +80,7 @@ JLINK:=$(JAVAPATH)/jlink
 DMG:=$(DISTDIR)/dmg/libdmg-hfsplus/build/dmg/dmg
 
 NSIS:=makensis
-LAUNCH4J:=~/java/launch4j/launch4j
+LAUNCH4J:=$(DISTDIR)/launch4j/launch4j/launch4j
 
 SKIPS:=
 

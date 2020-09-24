@@ -46,11 +46,10 @@ import VASSAL.tools.SequenceEncoder;
 import VASSAL.tools.swing.SwingUtils;
 
 /**
- * A trait that acts like a button on a GamePiece, such that clicking on a
- * particular area of the piece invokes a keyboard command
+ * A Trait (aka {@link Decorator} that acts like a button on a GamePiece, such that clicking on a
+ * particular area of the piece invokes a key command
  *
  * @author rkinney
- *
  */
 public class ActionButton extends Decorator implements EditablePiece, Loopable {
   public static final String ID = "button;";
@@ -58,7 +57,7 @@ public class ActionButton extends Decorator implements EditablePiece, Loopable {
   protected Rectangle bounds = new Rectangle();
   protected ButtonPusher pusher;
   protected String description = "";
-  protected static ButtonPusher globalPusher = new ButtonPusher();
+  protected static final ButtonPusher globalPusher = new ButtonPusher();
 
   public ActionButton() {
     this(ID, null);

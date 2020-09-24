@@ -17,31 +17,6 @@
  */
 package VASSAL.build;
 
-import VASSAL.build.module.BasicLogger;
-import VASSAL.build.module.GameRefresher;
-import VASSAL.build.module.KeyNamer;
-import VASSAL.build.module.PluginsLoader;
-import VASSAL.build.module.gamepieceimage.GamePieceImageDefinitions;
-import VASSAL.build.module.metadata.AbstractMetaData;
-import VASSAL.build.module.metadata.MetaDataFactory;
-import VASSAL.build.module.properties.GlobalProperties;
-import VASSAL.chat.AddressBookServerConfigurer;
-import VASSAL.chat.ChatServerFactory;
-import VASSAL.chat.DynamicClient;
-import VASSAL.chat.HybridClient;
-import VASSAL.chat.jabber.JabberClientFactory;
-import VASSAL.chat.node.NodeClientFactory;
-import VASSAL.chat.node.OfficialNodeClientFactory;
-import VASSAL.chat.node.PrivateNodeClientFactory;
-import VASSAL.chat.peer2peer.P2PClientFactory;
-import VASSAL.chat.ui.ChatServerControls;
-import VASSAL.configure.AutoConfigurer;
-import VASSAL.configure.PasswordConfigurer;
-import VASSAL.configure.StringConfigurer;
-import VASSAL.configure.TextConfigurer;
-import VASSAL.i18n.Language;
-import VASSAL.preferences.PositionOption;
-import VASSAL.tools.ProblemDialog;
 import java.awt.FileDialog;
 import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
@@ -503,13 +478,10 @@ public class GameModule extends AbstractConfigurable implements CommandEncoder, 
    * Initialize and register our multiplayer server controls
    */
   protected void initServer() {
-    ChatServerFactory.register(OfficialNodeClientFactory.OFFICIAL_TYPE, new OfficialNodeClientFactory());
-    ChatServerFactory.register(PrivateNodeClientFactory.PRIVATE_TYPE, new PrivateNodeClientFactory());
+    ChatServerFactory.register(NodeClientFactory.NODE_TYPE, new NodeClientFactory());
+    ChatServerFactory.register(DynamicClientFactory.DYNAMIC_TYPE, new DynamicClientFactory());
     ChatServerFactory.register(P2PClientFactory.P2P_TYPE, new P2PClientFactory());
     ChatServerFactory.register(JabberClientFactory.JABBER_TYPE, new JabberClientFactory());
-
-    // legacy server used to be stored as node type
-    ChatServerFactory.register(NodeClientFactory.NODE_TYPE, new OfficialNodeClientFactory());
 
     server = new DynamicClient();
     AddressBookServerConfigurer config = new AddressBookServerConfigurer("ServerImpl", "Server", (HybridClient) server);

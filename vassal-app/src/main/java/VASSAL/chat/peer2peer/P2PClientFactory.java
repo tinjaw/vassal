@@ -18,6 +18,8 @@
  */
 package VASSAL.chat.peer2peer;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -27,7 +29,10 @@ import VASSAL.build.GameModule;
 import VASSAL.chat.ChatServerConnection;
 import VASSAL.chat.ChatServerFactory;
 import VASSAL.chat.CommandDecoder;
-import VASSAL.chat.DummyMessageServer;
+import VASSAL.chat.HttpMessageServer;
+import VASSAL.chat.messageboard.Message;
+import VASSAL.command.Command;
+import VASSAL.command.NullCommand;
 import VASSAL.i18n.Resources;
 
 /**
@@ -54,21 +59,50 @@ public class P2PClientFactory extends ChatServerFactory {
   @Override
   public ChatServerConnection buildServer(Properties param) {
 
-    final DummyMessageServer msgServer = new DummyMessageServer();
+    final HttpMessageServer httpMessageServer = new P2PMessageServer();
 
-    final P2PClient server = new P2PClient(
-      GameModule.getGameModule(),
-      msgServer, msgServer,
-      new DirectPeerPool(param),
-      param
-    );
-
-    server.addPropertyChangeListener(ChatServerConnection.STATUS, e -> {
-      final String mess = (String) e.getNewValue();
-      GameModule.getGameModule().warn(mess);
-      logger.info(mess);
+    final P2PClient server = new P2PClient(GameModule.getGameModule(), httpMessageServer, httpMessageServer, new DirectPeerPool(param), param);
+    server.addPropertyChangeListener(ChatServerConnection.STATUS, new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        final String mess = (String) evt.getNewValue();
+        GameModule.getGameModule().warn(mess);
+        logger.info(mess);
+      }
     });
     server.addPropertyChangeListener(ChatServerConnection.INCOMING_MSG, new CommandDecoder());
     return server;
+  }
+
+  class P2PMessageServer extends HttpMessageServer {
+
+    public P2PMessageServer() {
+      super(new PeerPoolInfo() {
+        @Override
+        public String getModuleName() {
+          return GameModule.getGameModule() == null ? Resources.getString("Chat.unknown_module") : GameModule.getGameModule().getGameName(); //$NON-NLS-1$
+        }
+
+        @Override
+        public String getUserName() {
+          return GameModule.getUserId();
+        }
+      });
+    }
+
+    @Override
+    public Command getWelcomeMessage() {
+      return new NullCommand();
+    }
+
+    @Override
+    public Message[] getMessages() {
+      return null;
+    }
+
+    @Override
+    public void postMessage(String content) {
+      return;
+    }
   }
 }

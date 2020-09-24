@@ -31,15 +31,15 @@ import VASSAL.tools.ErrorDialog;
 import VASSAL.tools.ThrowableUtils;
 
 /**
- * Determines server implementation at run-time by downloading properties from the vassalengine.org site. Refreshes
- * every time the user attempts to connect
+ * Refreshes every time the user attempts to connect
  *
  * @author rkinney
  *
  */
 public class DynamicClient extends HybridClient {
-
+  @Deprecated(since = "2020-08-17", forRemoval = true)
   public static final String LEGACY_URL = "http://www.vassalengine.org/util/getServerImpl"; //$NON-NLS-1$
+  @Deprecated(since = "2020-08-17", forRemoval = true)
   public static final String JABBER_URL = "http://www.vassalengine.org/util/getJabberServerImpl"; //$NON-NLS-1$
 
   private static final Logger log = LoggerFactory.getLogger(DynamicClient.class);

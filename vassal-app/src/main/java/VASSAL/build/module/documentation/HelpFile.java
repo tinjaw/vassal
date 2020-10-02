@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -67,7 +68,7 @@ public class HelpFile extends AbstractConfigurable {
   }
 
   public HelpFile() {
-    this("help", (URL) null);
+    this("help", (URL) null); //NON-NLS
   }
 
   public HelpFile(String title, File contents, String ref)
@@ -164,7 +165,7 @@ public class HelpFile extends AbstractConfigurable {
   /** @deprecated Use {@link URLUtils#toURL(File)} instead. */
   @Deprecated(since = "2020-08-06", forRemoval = true)
   public static URL toURL(File f) throws MalformedURLException {
-    ProblemDialog.showDeprecated("2020-08-06");
+    ProblemDialog.showDeprecated("2020-08-06"); //NON-NLS
     return URLUtils.toURL(f);
   }
 
@@ -225,7 +226,7 @@ public class HelpFile extends AbstractConfigurable {
         fileType = ARCHIVE_ENTRY;
       }
       fileName = (String) val;
-      if ("Intro.txt".equals(key)) { //$NON-NLS-1$
+      if ("Intro.txt".equals(fileName)) { //$NON-NLS-1$
         fileType = RESOURCE;
       }
     }
@@ -289,6 +290,15 @@ public class HelpFile extends AbstractConfigurable {
       ErrorDialog.bug(ex);
       return null;
     }
+  }
+
+  /**
+   * {@link VASSAL.search.SearchTarget}
+   * @return a list of any Message Format strings referenced in the Configurable, if any (for search)
+   */
+  @Override
+  public List<String> getFormattedStringList() {
+    return List.of(title);
   }
 }
 

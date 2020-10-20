@@ -73,7 +73,7 @@ YEAR:=$(shell date +%Y)
 
 MVN:=./mvnw
 
-JAVAPATH:=/usr/bin
+JAVAPATH:=$(JAVA_HOME)/bin
 JDEPS:=$(JAVAPATH)/jdeps
 JLINK:=$(JAVAPATH)/jlink
 

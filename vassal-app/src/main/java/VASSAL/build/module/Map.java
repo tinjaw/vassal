@@ -18,6 +18,19 @@
 package VASSAL.build.module;
 
 import static java.lang.Math.round;
+
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLayeredPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JToolBar;
+import javax.swing.KeyStroke;
+import javax.swing.OverlayLayout;
+import javax.swing.RootPaneContainer;
+import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
 import java.awt.AWTEventMulticaster;
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -59,23 +72,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLayeredPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JToolBar;
-import javax.swing.KeyStroke;
-import javax.swing.OverlayLayout;
-import javax.swing.RootPaneContainer;
-import javax.swing.SwingUtilities;
-import javax.swing.WindowConstants;
-
-import net.miginfocom.swing.MigLayout;
-
 import org.apache.commons.lang3.SystemUtils;
-
 import org.jdesktop.animation.timing.Animator;
 import org.jdesktop.animation.timing.TimingTargetAdapter;
 import org.w3c.dom.Element;
@@ -101,6 +98,7 @@ import VASSAL.build.module.map.GlobalMap;
 import VASSAL.build.module.map.HidePiecesButton;
 import VASSAL.build.module.map.HighlightLastMoved;
 import VASSAL.build.module.map.ImageSaver;
+import VASSAL.build.module.map.JsonSaver;
 import VASSAL.build.module.map.KeyBufferer;
 import VASSAL.build.module.map.LOS_Thread;
 import VASSAL.build.module.map.LayeredPieceCollection;
@@ -119,12 +117,12 @@ import VASSAL.build.module.map.StackMetrics;
 import VASSAL.build.module.map.TextSaver;
 import VASSAL.build.module.map.Zoomer;
 import VASSAL.build.module.map.boardPicker.Board;
+import VASSAL.build.module.map.boardPicker.board.HexGrid;
 import VASSAL.build.module.map.boardPicker.board.MapGrid;
 import VASSAL.build.module.map.boardPicker.board.Region;
 import VASSAL.build.module.map.boardPicker.board.RegionGrid;
-import VASSAL.build.module.map.boardPicker.board.ZonedGrid;
-import VASSAL.build.module.map.boardPicker.board.HexGrid;
 import VASSAL.build.module.map.boardPicker.board.SquareGrid;
+import VASSAL.build.module.map.boardPicker.board.ZonedGrid;
 import VASSAL.build.module.map.boardPicker.board.mapgrid.Zone;
 import VASSAL.build.module.properties.ChangePropertyCommandEncoder;
 import VASSAL.build.module.properties.GlobalProperties;
@@ -139,6 +137,7 @@ import VASSAL.configure.AutoConfigurer;
 import VASSAL.configure.BooleanConfigurer;
 import VASSAL.configure.ColorConfigurer;
 import VASSAL.configure.CompoundValidityChecker;
+import VASSAL.configure.ConfigureTree;
 import VASSAL.configure.Configurer;
 import VASSAL.configure.ConfigurerFactory;
 import VASSAL.configure.ConfigureTree;
@@ -178,6 +177,7 @@ import VASSAL.tools.UniqueIdManager;
 import VASSAL.tools.WrapLayout;
 import VASSAL.tools.menu.MenuManager;
 import VASSAL.tools.swing.SwingUtils;
+import net.miginfocom.swing.MigLayout;
 
 /**
  * The Map is the main component for displaying and containing {@link GamePiece}s during play. Pieces are displayed on
@@ -3183,8 +3183,8 @@ public class Map extends AbstractToolbarItem implements GameComponent, MouseList
   @Override
   public Class<?>[] getAllowableConfigureComponents() {
     return new Class<?>[]{ GlobalMap.class, LOS_Thread.class, ToolbarMenu.class, MultiActionButton.class, HidePiecesButton.class, Zoomer.class,
-      CounterDetailViewer.class, HighlightLastMoved.class, LayeredPieceCollection.class, ImageSaver.class, TextSaver.class, DrawPile.class, SetupStack.class,
-      MassKeyCommand.class, MapShader.class, PieceRecenterer.class, Flare.class };
+      CounterDetailViewer.class, HighlightLastMoved.class, LayeredPieceCollection.class, ImageSaver.class, TextSaver.class,
+      JsonSaver.class, DrawPile.class, SetupStack.class, MassKeyCommand.class, MapShader.class, PieceRecenterer.class, Flare.class };
   }
 
   /**

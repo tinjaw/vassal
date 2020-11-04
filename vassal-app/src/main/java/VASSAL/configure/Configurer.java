@@ -24,6 +24,7 @@ import java.awt.Toolkit;
 import java.awt.Window;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+
 import javax.swing.SwingUtilities;
 
 /**
@@ -52,6 +53,8 @@ public abstract class Configurer {
   /** When frozen is true, setting the value programmatically will not
    * result in a PropertyChangeEvent being fired */
   protected boolean frozen = false;
+  /** A Hint to be displayed in an empty field */
+  protected String hint = "";
 
   public Configurer(String key, String name) {
     this(key, name, null);
@@ -79,7 +82,7 @@ public abstract class Configurer {
   }
 
   public void setName(String s) {
-    String oldName = name;
+    final String oldName = name;
     name = s;
     if (!frozen) {
       changeSupport.firePropertyChange(NAME_PROPERTY, oldName, name);
@@ -103,7 +106,7 @@ public abstract class Configurer {
    * Set the Object value
    */
   public void setValue(Object o) {
-    Object oldValue = getValue();
+    final Object oldValue = getValue();
     value = o;
     if (!frozen) {
       changeSupport.firePropertyChange(key, oldValue, value);
@@ -136,7 +139,7 @@ public abstract class Configurer {
   /**
    * GUI interface for setting the option in an editing window
    */
-  public abstract java.awt.Component getControls();
+  public abstract Component getControls();
 
   /**
    * Add a listener to be notified when the Object state changes
@@ -185,5 +188,42 @@ public abstract class Configurer {
     else {
       return Toolkit.getDefaultToolkit().getScreenSize();
     }
+  }
+
+  /**
+   * Return the current hint String
+   *
+   * @return Current Hint String
+   */
+  public String getHint() {
+    return hint;
+  }
+
+  /**
+   * Set the Hint String
+   *
+   * @param hint New Hint string
+   */
+  public void setHint(String hint) {
+    this.hint = hint;
+  }
+
+  /**
+   * Show/Hide the internal label maintained by this Configurer. It is up
+   * to individual Configurers to track and hide the label (if they can).
+   *
+   * This method is currently only utilized by the Preference configs
+   * {@link VASSAL.preferences.PrefsEditor#addOption(String, Configurer)}
+   * to extract an existing label in a configurer, display correctly
+   * aligned and suppress the original label. This keeps compatibility with
+   * custom module code setting up preferences.
+   *
+   * This method only needs to be implemented in Configurers that are
+   * added as preferences.
+   *
+   * @param visible Hide label if true
+   */
+  public void setLabelVisibile(boolean visible) {
+
   }
 }

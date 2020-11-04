@@ -17,11 +17,13 @@
  */
 package VASSAL.build.module;
 
+import VASSAL.configure.IconConfigurer;
 import VASSAL.tools.ProblemDialog;
 import java.awt.Container;
 import java.awt.dnd.DragSource;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -78,7 +80,6 @@ public class GlobalOptions extends AbstractConfigurable {
   public static final String PROMPT = "Use Preferences Setting"; //$NON-NLS-1$
   public static final String SINGLE_WINDOW = "singleWindow"; //$NON-NLS-1$
   public static final String MAXIMUM_HEAP = "maximumHeap"; //$NON-NLS-1$
-  public static final String INITIAL_HEAP = "initialHeap"; //$NON-NLS-1$
   public static final String BUG_10295 = "bug10295"; //$NON-NLS-1$
   public static final String CLASSIC_MFD = "classicMfd"; //$NON-NLS-1$
   public static final String DRAG_THRESHOLD = "dragThreshold"; //$NON-NLS-1$
@@ -96,15 +97,17 @@ public class GlobalOptions extends AbstractConfigurable {
 
   public static final boolean FORCE_MAC_LEGACY = true; //BR// Keeps Mac key translation "waiting in the wings"
 
+  @Deprecated(since = "2020-10-21", forRemoval = true)
+  public static final String INITIAL_HEAP = "initialHeap"; //$NON-NLS-1$
+
   private String promptString = Resources.getString("GlobalOptions.opponents_can_unmask_my_pieces");
   private String nonOwnerUnmaskable = NEVER;
-  private final String centerOnMoves = PROMPT;
   private String autoReport = ALWAYS;
   private String markMoved = NEVER;
   private String chatterHTMLSupport = NEVER;
-  
+
   private int dragThreshold = 10;
-  
+
   private boolean macLegacy;
   private boolean soundGlobalMute = false;
   private boolean soundWakeupMute = false;
@@ -117,9 +120,9 @@ public class GlobalOptions extends AbstractConfigurable {
 
   private static GlobalOptions instance = new GlobalOptions();
   private boolean useSingleWindow;
-  
+
   private boolean useClassicMoveFixedDistance = false;
-  private BooleanConfigurer classicMfd;  
+  private BooleanConfigurer classicMfd;
 
   private static void setInstance(GlobalOptions go) {
     instance = go;
@@ -132,7 +135,7 @@ public class GlobalOptions extends AbstractConfigurable {
     final GameModule gm = GameModule.getGameModule();
     final Prefs prefs = gm.getPrefs();
 
-    // should this moudule use a combined main window?
+    // should this module use a combined main window?
     final BooleanConfigurer combConf = new BooleanConfigurer(
       SINGLE_WINDOW,
       Resources.getString("GlobalOptions.use_combined"),  //$NON-NLS-1$
@@ -140,14 +143,6 @@ public class GlobalOptions extends AbstractConfigurable {
     );
     prefs.addOption(combConf);
     useSingleWindow = !Boolean.FALSE.equals(combConf.getValue());
-
-    // the initial heap size for this module
-    final IntConfigurer initHeapConf = new IntConfigurer(
-      INITIAL_HEAP,
-      Resources.getString("GlobalOptions.initial_heap"),  //$NON-NLS-1$
-      256
-    );
-    prefs.addOption(initHeapConf);
 
     // the maximum heap size for this module
     final IntConfigurer maxHeapConf = new IntConfigurer(
@@ -185,7 +180,7 @@ public class GlobalOptions extends AbstractConfigurable {
 
       prefs.addOption(Resources.getString("Prefs.compatibility_tab"), bug10295Conf);
     }
-    
+
     // Move Fixed Distance trait (Translate) has been substantially re-written.
     // Use new version by default. User may over-ride to use old buggy behaviour.
     classicMfd = new BooleanConfigurer(
@@ -207,7 +202,7 @@ public class GlobalOptions extends AbstractConfigurable {
       System.setProperty("awt.dnd.drag.threshold", Integer.toString(dragThreshold));
     });
     prefs.addOption(dragThresholdConf);
-    
+
     //BR// Mac Legacy (essentially swaps Control and Command functions to their "old, bad, pre-3.3.3" mappings)
     final BooleanConfigurer macLegacyConf = new BooleanConfigurer(
         MAC_LEGACY,
@@ -219,8 +214,8 @@ public class GlobalOptions extends AbstractConfigurable {
       // Only need to *display* this preference if we're running on a Mac.
       prefs.addOption(Resources.getString("Prefs.compatibility_tab"), macLegacyConf);
     }
-    
-    BooleanConfigurer config = new BooleanConfigurer(CENTER_ON_MOVE, Resources.getString("GlobalOptions.center_on_move"), Boolean.TRUE); //$NON-NLS-1$
+
+    final BooleanConfigurer config = new BooleanConfigurer(CENTER_ON_MOVE, Resources.getString("GlobalOptions.center_on_move"), Boolean.TRUE); //$NON-NLS-1$
     prefs.addOption(config);
 
     //CC// center_on_move_border_proximity_pct (is the pct of distance from border to center of window that triggers a recenter
@@ -273,7 +268,7 @@ public class GlobalOptions extends AbstractConfigurable {
     // Tell SwingUtils we've changed our mind about Macs
     SwingUtils.setMacLegacy(b);
     // Since we've changed our key mapping paradigm, we need to refresh all the keystroke listeners.
-    GameModule.getGameModule().refreshKeyStrokeListeners(); 
+    GameModule.getGameModule().refreshKeyStrokeListeners();
   }
 
   public boolean getPrefMacLegacy() {
@@ -379,7 +374,7 @@ public class GlobalOptions extends AbstractConfigurable {
    */
   public void addOption(Configurer option) {
     OPTION_CONFIGURERS.put(option.getKey(), option);
-    Object initValue = OPTION_INITIAL_VALUES.get(option.getKey());
+    final Object initValue = OPTION_INITIAL_VALUES.get(option.getKey());
 
     if (initValue instanceof String) {
       option.setValue((String)initValue);
@@ -430,7 +425,7 @@ public class GlobalOptions extends AbstractConfigurable {
   @Override
   public Element getBuildElement(Document doc) {
     final Element e = super.getBuildElement(doc);
-    for (Configurer c : OPTION_CONFIGURERS.values()) {
+    for (final Configurer c : OPTION_CONFIGURERS.values()) {
       final Element option = doc.createElement("option"); //$NON-NLS-1$
       option.setAttribute("name", c.getKey()); //$NON-NLS-1$
       option.appendChild(doc.createTextNode(c.getValueString()));
@@ -443,11 +438,13 @@ public class GlobalOptions extends AbstractConfigurable {
   public Configurer getConfigurer() {
     if (config == null) {
       final Configurer defaultConfig = super.getConfigurer();
-      for (Configurer c : OPTION_CONFIGURERS.values()) {
+      for (final Configurer c : OPTION_CONFIGURERS.values()) {
         final Container container = (Container) defaultConfig.getControls();
         final String name = c.getName();
-        container.add(new JLabel(name));
+        final JLabel label = new JLabel(name);
         c.setName("");
+        label.setLabelFor(c.getControls());
+        container.add(label);
         container.add(c.getControls(), "wrap"); // NON-NLS
         c.setName(name);
       }
@@ -479,10 +476,10 @@ public class GlobalOptions extends AbstractConfigurable {
       return playerIdFormat.getFormat();
     }
     else if (DRAG_THRESHOLD.equals(key)) {
-      return Integer.toString(dragThreshold);  
+      return Integer.toString(dragThreshold);
     }
     else if (!OPTION_CONFIGURERS.containsKey(key)) {
-      Object val = properties.get(key);
+      final Object val = properties.get(key);
       return val != null ? val.toString() : null;
     }
     else {
@@ -517,7 +514,6 @@ public class GlobalOptions extends AbstractConfigurable {
     }
     else if (PROMPT_STRING.equals(key)) {
       promptString = (String) value;
-      ObscurableOptions.getInstance().setPrompt(promptString);
     }
     else if (CHATTER_HTML_SUPPORT.equals(key)) {
       chatterHTMLSupport = (String) value;
@@ -525,14 +521,14 @@ public class GlobalOptions extends AbstractConfigurable {
     else if (AUTO_REPORT.equals(key)) {
       autoReport = (String) value;
       if (PROMPT.equals(autoReport)) {
-        BooleanConfigurer config = new BooleanConfigurer(AUTO_REPORT, Resources.getString("GlobalOptions.auto_report")); //$NON-NLS-1$
+        final BooleanConfigurer config = new BooleanConfigurer(AUTO_REPORT, Resources.getString("GlobalOptions.auto_report")); //$NON-NLS-1$
         GameModule.getGameModule().getPrefs().addOption(config);
       }
     }
     else if (MARK_MOVED.equals(key)) {
       markMoved = (String) value;
       if (PROMPT.equals(markMoved)) {
-        BooleanConfigurer config = new BooleanConfigurer(MARK_MOVED, Resources.getString("GlobalOptions.mark_moved")); //$NON-NLS-1$
+        final BooleanConfigurer config = new BooleanConfigurer(MARK_MOVED, Resources.getString("GlobalOptions.mark_moved")); //$NON-NLS-1$
         GameModule.getGameModule().getPrefs().addOption(config);
       }
     }
@@ -569,7 +565,7 @@ public class GlobalOptions extends AbstractConfigurable {
   public String chatterHTMLSetting() {
     return chatterHTMLSupport;
   }
-  
+
   public boolean chatterHTMLSupport() {
     return isEnabled(chatterHTMLSupport, CHATTER_HTML_SUPPORT);
   }
@@ -577,11 +573,11 @@ public class GlobalOptions extends AbstractConfigurable {
   public boolean isMarkMoveEnabled() {
     return isEnabled(markMoved, MARK_MOVED);
   }
-  
+
   public int getDragThreshold() {
     return dragThreshold;
   }
-  
+
   public String getPlayerId() {
     playerIdFormat.setProperty(PLAYER_NAME, (String) GameModule.getGameModule().getPrefs().getValue(GameModule.REAL_NAME));
     playerIdFormat.setProperty(PLAYER_SIDE, PlayerRoster.getMyLocalizedSide());
@@ -606,7 +602,7 @@ public class GlobalOptions extends AbstractConfigurable {
   @Override
   public List<String> getPropertyNames() {
     final ArrayList<String> l = new ArrayList<>();
-    for (Buildable b : getBuildables()) {
+    for (final Buildable b : getBuildables()) {
       if (b instanceof BasicPreference) {
         l.add(((BasicPreference) b).getVariableName());
       }
@@ -621,5 +617,19 @@ public class GlobalOptions extends AbstractConfigurable {
   @Override
   public List<String> getFormattedStringList() {
     return List.of(playerIdFormat.getFormat());
+  }
+
+  /**
+   * Our Option Configurers (undo button, server button, step-forward button) potentially have icons to add the references for
+   * @param s Collection to add image names to
+   */
+  @Override
+  public void addImageNamesRecursively(Collection<String> s) {
+    for (final Configurer c : OPTION_CONFIGURERS.values()) {
+      if (!(c instanceof IconConfigurer)) {
+        continue;
+      }
+      s.add(c.getValueString());
+    }
   }
 }

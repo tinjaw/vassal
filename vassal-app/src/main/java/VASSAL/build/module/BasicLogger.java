@@ -113,11 +113,11 @@ public class BasicLogger implements Logger, Buildable, GameComponent, CommandEnc
     mod.getGameState().addGameComponent(this);
 
     final MenuManager mm = MenuManager.getInstance();
-    // FIMXE: setting nmemonic from first letter could cause collisions in
+    // FIXME: setting mnemonic from first letter could cause collisions in
     // some languages
     newLogAction.putValue(Action.MNEMONIC_KEY, (int)Resources.getString("BasicLogger.begin_logfile.shortcut").charAt(0));
     mm.addAction("BasicLogger.begin_logfile", newLogAction); //NON-NLS
-    // FIMXE: setting nmemonic from first letter could cause collisions in
+    // FIXME: setting mnemonic from first letter could cause collisions in
     // some languages
     endLogAction.putValue(Action.MNEMONIC_KEY, (int)Resources.getString("BasicLogger.end_logfile.shortcut").charAt(0));
     mm.addAction("BasicLogger.end_logfile", endLogAction); //NON-NLS
@@ -129,13 +129,13 @@ public class BasicLogger implements Logger, Buildable, GameComponent, CommandEnc
     button = mod.getToolBar().add(stepAction);
     button.setToolTipText(Resources.getString("BasicLogger.step_forward_tooltip"));  //$NON-NLS-1$
     button.setAlignmentY((float) 0.0);
-    
+
     final NamedKeyStrokeListener undoKeyListener = new NamedKeyStrokeListener(undoAction, null);
     mod.addKeyStrokeListener(undoKeyListener);
 
     final NamedKeyStrokeListener stepKeyListener = new NamedKeyStrokeListener(stepAction, NamedKeyStroke.getNamedKeyStroke(KeyEvent.VK_PAGE_DOWN, 0));
     mod.addKeyStrokeListener(stepKeyListener);
-    
+
     final KeyStrokeListener newLogKeyListener = new KeyStrokeListener(newLogAction, KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.ALT_DOWN_MASK));
     mod.addKeyStrokeListener(newLogKeyListener);
 
@@ -144,14 +144,14 @@ public class BasicLogger implements Logger, Buildable, GameComponent, CommandEnc
     GlobalOptions.getInstance().addOption(stepIconConfig);
     stepIconConfig.addPropertyChangeListener(evt -> stepAction.putValue(Action.SMALL_ICON, stepIconConfig.getIconValue()));
     stepIconConfig.fireUpdate();
-    
+
     final NamedHotKeyConfigurer stepKeyConfig = new NamedHotKeyConfigurer("stepHotKey", Resources.getString("BasicLogger.step_forward_hotkey"), stepKeyListener.getNamedKeyStroke());  //$NON-NLS-1$ //$NON-NLS-2$
     GlobalOptions.getInstance().addOption(stepKeyConfig);
     stepKeyConfig.addPropertyChangeListener(evt -> {
       stepKeyListener.setKeyStroke(stepKeyConfig.getValueNamedKeyStroke());
       if (stepKeyListener.getKeyStroke() != null) {
         stepAction.putValue(Action.SHORT_DESCRIPTION, Resources.getString("BasicLogger.step_forward_tooltip2", NamedHotKeyConfigurer.getString(stepKeyListener.getKeyStroke())));  //$NON-NLS-1$
-      } 
+      }
       else {
         stepAction.putValue(Action.SHORT_DESCRIPTION, Resources.getString("BasicLogger.step_forward_tooltip3"));  //$NON-NLS-1$
       }
@@ -161,7 +161,7 @@ public class BasicLogger implements Logger, Buildable, GameComponent, CommandEnc
     final IconConfigurer undoIconConfig = new IconConfigurer("undoIcon", Resources.getString("BasicLogger.undo_icon"), UNDO_ICON);  //$NON-NLS-1$ //$NON-NLS-2$
     undoIconConfig.setValue(UNDO_ICON);
     GlobalOptions.getInstance().addOption(undoIconConfig);
-    undoIconConfig.addPropertyChangeListener(evt -> undoAction.putValue(Action.SMALL_ICON, undoIconConfig.getIconValue())); 
+    undoIconConfig.addPropertyChangeListener(evt -> undoAction.putValue(Action.SMALL_ICON, undoIconConfig.getIconValue()));
     undoIconConfig.fireUpdate();
 
     final NamedHotKeyConfigurer undoKeyConfig = new NamedHotKeyConfigurer("undoHotKey", Resources.getString("BasicLogger.undo_hotkey"), undoKeyListener.getNamedKeyStroke()); //$NON-NLS-1$ //$NON-NLS-2$
@@ -170,20 +170,20 @@ public class BasicLogger implements Logger, Buildable, GameComponent, CommandEnc
       undoKeyListener.setKeyStroke(undoKeyConfig.getValueNamedKeyStroke());
       if (undoKeyListener.getKeyStroke() != null) {
         undoAction.putValue(Action.SHORT_DESCRIPTION, Resources.getString("BasicLogger.undo_tooltip2", NamedHotKeyConfigurer.getString(undoKeyListener.getKeyStroke()))); //$NON-NLS-1$
-      } 
+      }
       else {
         undoAction.putValue(Action.SHORT_DESCRIPTION, Resources.getString("BasicLogger.undo_last_move")); //$NON-NLS-1$
       }
     });
     undoKeyConfig.fireUpdate();
 
-    BooleanConfigurer logOptionStart = new BooleanConfigurer(PROMPT_NEW_LOG_START, Resources.getString("BasicLogger.prompt_new_log_before"), Boolean.TRUE);  //$NON-NLS-1$
+    final BooleanConfigurer logOptionStart = new BooleanConfigurer(PROMPT_NEW_LOG_START, Resources.getString("BasicLogger.prompt_new_log_before"), Boolean.TRUE);  //$NON-NLS-1$
     mod.getPrefs().addOption(Resources.getString("Prefs.general_tab"), logOptionStart); //$NON-NLS-1$
 
-    BooleanConfigurer logOptionEnd = new BooleanConfigurer(PROMPT_NEW_LOG_END, Resources.getString("BasicLogger.prompt_new_log_after"), Boolean.TRUE);  //$NON-NLS-1$
+    final BooleanConfigurer logOptionEnd = new BooleanConfigurer(PROMPT_NEW_LOG_END, Resources.getString("BasicLogger.prompt_new_log_after"), Boolean.TRUE);  //$NON-NLS-1$
     mod.getPrefs().addOption(Resources.getString("Prefs.general_tab"), logOptionEnd); //$NON-NLS-1$
 
-    BooleanConfigurer logOptionComment = new BooleanConfigurer(PROMPT_LOG_COMMENT, Resources.getString("BasicLogger.enable_comments"), Boolean.TRUE);  //$NON-NLS-1$
+    final BooleanConfigurer logOptionComment = new BooleanConfigurer(PROMPT_LOG_COMMENT, Resources.getString("BasicLogger.enable_comments"), Boolean.TRUE);  //$NON-NLS-1$
     mod.getPrefs().addOption(Resources.getString("Prefs.general_tab"), logOptionComment); //$NON-NLS-1$
   }
 
@@ -269,11 +269,12 @@ public class BasicLogger implements Logger, Buildable, GameComponent, CommandEnc
    * Check if user would like to create a new logfile
    */
   public void queryNewLogFile(boolean atStart) {
-    String prefName;
-    String prompt;
     if (isLogging()) {
       return;
     }
+
+    final String prefName;
+    final String prompt;
 
     if (atStart) {
       prefName = PROMPT_NEW_LOG_START;
@@ -287,13 +288,13 @@ public class BasicLogger implements Logger, Buildable, GameComponent, CommandEnc
     final GameModule g = GameModule.getGameModule();
 
     if ((Boolean) g.getPrefs().getValue(prefName)) {
-      Object[] options = {
+      final Object[] options = {
         Resources.getString(Resources.YES),
         Resources.getString(Resources.NO),
         Resources.getString("BasicLogger.dont_prompt_again")  //$NON-NLS-1$
       };
 
-      int result = JOptionPane.showOptionDialog(
+      final int result = JOptionPane.showOptionDialog(
         g.getPlayerWindow(),
         Resources.getString("BasicLogger.start_new_log_file", prompt), //$NON-NLS-1$
         "",  //$NON-NLS-1$
@@ -320,7 +321,7 @@ public class BasicLogger implements Logger, Buildable, GameComponent, CommandEnc
   public void write() throws IOException {
     if (!logOutput.isEmpty()) {
       final Command log = beginningState;
-      for (Command c : logOutput) {
+      for (final Command c : logOutput) {
         log.append(new LogCommand(c, logInput, stepAction));
       }
 
@@ -354,7 +355,7 @@ public class BasicLogger implements Logger, Buildable, GameComponent, CommandEnc
     String name = fc.getSelectedFile() == null
       ? null : fc.getSelectedFile().getName();
     if (name != null) {
-      int index = name.lastIndexOf('.');
+      final int index = name.lastIndexOf('.');
       if (index > 0) {
         name = name.substring(0, index) + ".vlog";  //$NON-NLS-1$
         fc.setSelectedFile(new File(fc.getSelectedFile().getParent(), name));
@@ -416,8 +417,8 @@ public class BasicLogger implements Logger, Buildable, GameComponent, CommandEnc
   }
 
   protected void undo() {
-    Command lastOutput = logOutput.get(nextUndo);
-    Command lastInput = (nextInput > logInput.size() || nextInput < 1) ?
+    final Command lastOutput = logOutput.get(nextUndo);
+    final Command lastInput = (nextInput > logInput.size() || nextInput < 1) ?
       null : logInput.get(nextInput - 1);
     if (lastInput == lastOutput) {
       while (nextInput-- > 0) {
@@ -433,7 +434,7 @@ public class BasicLogger implements Logger, Buildable, GameComponent, CommandEnc
       }
     }
     undoAction.setEnabled(nextUndo >= 0);
-    Command undo = lastOutput.getUndoCommand();
+    final Command undo = lastOutput.getUndoCommand();
     undo.execute();
     GameModule.getGameModule().getServer().sendToOthers(undo);
     logOutput.add(undo);
@@ -475,7 +476,7 @@ public class BasicLogger implements Logger, Buildable, GameComponent, CommandEnc
       return null;
     }
 
-    Command logged = GameModule.getGameModule().decode(command.substring(LOG.length()));
+    final Command logged = GameModule.getGameModule().decode(command.substring(LOG.length()));
     if (logged == null) {
       return null;
     }
@@ -527,7 +528,7 @@ public class BasicLogger implements Logger, Buildable, GameComponent, CommandEnc
       this.stepAction = stepAction;
       logged = c;
 
-      for (Command sub : c.getSubCommands()) {
+      for (final Command sub : c.getSubCommands()) {
         append(new LogCommand(sub, logInput, stepAction));
       }
 
@@ -549,14 +550,14 @@ public class BasicLogger implements Logger, Buildable, GameComponent, CommandEnc
 
     @Override
     public void execute() {
-      Command c = assembleCommand();
+      final Command c = assembleCommand();
       logInput.add(c);
       stepAction.setEnabled(true);
     }
 
     protected Command assembleCommand() {
       final Command c = logged;
-      for (Command sub : getSubCommands()) {
+      for (final Command sub : getSubCommands()) {
         c.append(((LogCommand) sub).assembleCommand());
       }
       return c;
@@ -584,7 +585,7 @@ public class BasicLogger implements Logger, Buildable, GameComponent, CommandEnc
     private static final long serialVersionUID = 1L;
 
     public UndoAction() {
-      URL iconURL = getClass().getResource(UNDO_ICON);
+      final URL iconURL = getClass().getResource(UNDO_ICON);
       if (iconURL != null) {
         putValue(Action.SMALL_ICON, new ImageIcon(iconURL));
       }

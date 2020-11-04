@@ -49,6 +49,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -148,6 +149,12 @@ public class PieceMover extends AbstractBuildable
     return new MovementReporter(c);
   }
 
+  @Override
+  public void addLocalImageNames(Collection<String> s) {
+    if (iconName != null) s.add(iconName);
+    if (markUnmovedIcon != null) s.add(markUnmovedIcon);
+  }
+
   /**
    * When the user completes a drag-drop operation, the pieces being dragged will either be combined
    * with an existing piece on the map or else placed on the map without stack.
@@ -196,7 +203,7 @@ public class PieceMover extends AbstractBuildable
         if (selected != null &&
             DragBuffer.getBuffer().contains(selected) &&
             selected.getParent() != null &&
-            selected.getParent().topPiece() == selected) {
+            selected.getParent().topPiece() == selected) {  //NOTE: topPiece() returns the top VISIBLE piece (not hidden by Invisible trait)
           selected = null;
         }
         return selected;
@@ -215,7 +222,7 @@ public class PieceMover extends AbstractBuildable
             this.map.getPieceCollection().canMerge(dragging, s) &&
             !DragBuffer.getBuffer().contains(s) &&
             !DragBuffer.getBuffer().containsAllMembers(s) &&  //BR// Don't merge back into a stack we are in the act of emptying
-            s.topPiece() != null) {
+            s.topPiece() != null) {  //NOTE: topPiece() returns the top VISIBLE piece (not hidden by Invisible trait)
           if (this.map.isLocationRestricted(pt) && !s.isExpanded()) {
             if (s.getPosition().equals(this.map.snapTo(pt))) {
               selected = s;
@@ -253,7 +260,7 @@ public class PieceMover extends AbstractBuildable
       public Object visitDeck(Deck d) {
         final DragBuffer dbuf = DragBuffer.getBuffer();
         dbuf.clear();
-        for (PieceIterator it = d.drawCards(); it.hasMoreElements();) {
+        for (final PieceIterator it = d.drawCards(); it.hasMoreElements();) {
           final GamePiece p = it.nextPiece();
           p.setProperty(Properties.OBSCURED_BY, p.getProperty(Properties.OBSCURED_BY_PRE_DRAW)); // Bug 13433 restore correct OBSCURED_BY
           dbuf.add(p);
@@ -291,7 +298,7 @@ public class PieceMover extends AbstractBuildable
           // If clicking on a stack with a selected piece, put all selected
           // pieces in other stacks into the drag buffer
           kbuf.sort(PieceMover.this);
-          for (GamePiece piece : kbuf.asList()) {
+          for (final GamePiece piece : kbuf.asList()) {
             if (piece.getParent() != s) {
               dbuf.add(piece);
             }
@@ -315,7 +322,7 @@ public class PieceMover extends AbstractBuildable
           // If clicking on a selected piece, put all selected pieces into the
           // drag buffer
           kbuf.sort(PieceMover.this);
-          for (GamePiece piece : kbuf.asList()) {
+          for (final GamePiece piece : kbuf.asList()) {
             dbuf.add(piece);
           }
         }
@@ -381,7 +388,7 @@ public class PieceMover extends AbstractBuildable
   protected void initButton() {
     final String value = getMarkOption();
     if (GlobalOptions.PROMPT.equals(value)) {
-      BooleanConfigurer config = new BooleanConfigurer(
+      final BooleanConfigurer config = new BooleanConfigurer(
         Map.MARK_MOVED, Resources.getString("Editor.PieceMover.mark_moved_pieces"), Boolean.TRUE);
       GameModule.getGameModule().getPrefs().addOption(config);
     }
@@ -391,7 +398,7 @@ public class PieceMover extends AbstractBuildable
         final ActionListener al = e -> {
           final GamePiece[] p = map.getAllPieces();
           final Command c = new NullCommand();
-          for (GamePiece gamePiece : p) {
+          for (final GamePiece gamePiece : p) {
             c.append(markMoved(gamePiece, false));
           }
           GameModule.getGameModule().sendAndLog(c);
@@ -501,7 +508,7 @@ public class PieceMover extends AbstractBuildable
   protected Command setOldLocations(GamePiece p) {
     Command comm = new NullCommand();
     if (p instanceof Stack) {
-      for (GamePiece gamePiece : ((Stack) p).asList()) {
+      for (final GamePiece gamePiece : ((Stack) p).asList()) {
         comm = comm.append(Decorator.putOldProperties(gamePiece));
       }
     }
@@ -520,7 +527,7 @@ public class PieceMover extends AbstractBuildable
     Command c = new NullCommand();
     if (!hasMoved || shouldMarkMoved()) {
       if (p instanceof Stack) {
-        for (GamePiece gamePiece : ((Stack) p).asList()) {
+        for (final GamePiece gamePiece : ((Stack) p).asList()) {
           c = c.append(markMoved(gamePiece, hasMoved));
         }
       }
@@ -560,17 +567,16 @@ public class PieceMover extends AbstractBuildable
    *          Point mouse released
    */
   public Command movePieces(Map map, Point p) {
-    final List<GamePiece> allDraggedPieces = new ArrayList<>();
     final PieceIterator it = DragBuffer.getBuffer().getIterator();
     if (!it.hasMoreElements()) return null;
 
+    final List<GamePiece> allDraggedPieces = new ArrayList<>();
     Point offset = null;
     Command comm = new NullCommand();
     final BoundsTracker tracker = new BoundsTracker();
     // Map of Point->List<GamePiece> of pieces to merge with at a given
     // location. There is potentially one piece for each Game Piece Layer.
-    final HashMap<Point, List<GamePiece>> mergeTargets =
-      new HashMap<>();
+    final HashMap<Point, List<GamePiece>> mergeTargets = new HashMap<>();
     while (it.hasMoreElements()) {
       dragging = it.nextPiece();
       tracker.addPiece(dragging);
@@ -596,7 +602,8 @@ public class PieceMover extends AbstractBuildable
       // Find an already-moved piece that we can merge with at the destination
       // point
       if (mergeCandidates != null) {
-        for (int i = 0, n = mergeCandidates.size(); i < n; ++i) {
+        final int n = mergeCandidates.size();
+        for (int i = 0; i < n; ++i) {
           final GamePiece candidate = mergeCandidates.get(i);
           if (map.getPieceCollection().canMerge(candidate, dragging)) {
             mergeWith = candidate;
@@ -653,7 +660,7 @@ public class PieceMover extends AbstractBuildable
         // user Deck.NO_USER
         if (mergeWith instanceof Deck) {
           final ArrayList<GamePiece> newList = new ArrayList<>(0);
-          for (GamePiece piece : draggedPieces) {
+          for (final GamePiece piece : draggedPieces) {
             if (((Deck) mergeWith).mayContain(piece)) {
               final boolean isObscuredToMe = Boolean.TRUE.equals(piece.getProperty(Properties.OBSCURED_TO_ME));
               if (!isObscuredToMe || Deck.NO_USER.equals(piece.getProperty(Properties.OBSCURED_BY))) {
@@ -673,7 +680,7 @@ public class PieceMover extends AbstractBuildable
         // into an expanded Stack and the merge order must be reversed to
         // maintain the order of the merging pieces.
         if (mergeWith instanceof Stack) {
-          for (GamePiece draggedPiece : draggedPieces) {
+          for (final GamePiece draggedPiece : draggedPieces) {
             comm = comm.append(movedPiece(draggedPiece, mergeWith.getPosition()));
             comm = comm.append(map.getStackMetrics().merge(mergeWith, draggedPiece));
           }
@@ -686,7 +693,7 @@ public class PieceMover extends AbstractBuildable
         }
       }
 
-      for (GamePiece piece : draggedPieces) {
+      for (final GamePiece piece : draggedPieces) {
         KeyBuffer.getBuffer().add(piece);
       }
 
@@ -722,7 +729,7 @@ public class PieceMover extends AbstractBuildable
 
   protected Command applyKeyAfterMove(List<GamePiece> pieces, KeyStroke key) {
     Command comm = new NullCommand();
-    for (GamePiece piece : pieces) {
+    for (final GamePiece piece : pieces) {
       if (piece.getProperty(Properties.SNAPSHOT) == null) {
         piece.setProperty(Properties.SNAPSHOT, ((PropertyExporter) piece).getProperties());
       }
@@ -1130,12 +1137,12 @@ public class PieceMover extends AbstractBuildable
       int index = 0;
       Point lastPos = null;
       int stackCount = 0;
-      for (PieceIterator dragContents = DragBuffer.getBuffer().getIterator();
+      for (final PieceIterator dragContents = DragBuffer.getBuffer().getIterator();
            dragContents.hasMoreElements(); ) {
 
         final GamePiece piece = dragContents.nextPiece();
         final Point pos = relativePositions.get(index++);
-        final Map map = piece.getMap();        
+        final Map map = piece.getMap();
 
         if (piece instanceof Stack) {
           stackCount = 0;
@@ -1252,9 +1259,9 @@ public class PieceMover extends AbstractBuildable
       // selected in a selection rectangle, unless they are being
       // dragged from a piece palette (i.e., getMap() == null).
       final List<GamePiece> pieces = new ArrayList<>();
-      for (PieceIterator i = db.getIterator();
+      for (final PieceIterator i = db.getIterator();
            i.hasMoreElements(); pieces.add(i.nextPiece()));
-      for (GamePiece piece : pieces) {
+      for (final GamePiece piece : pieces) {
         if (piece.getMap() != null &&
             Boolean.TRUE.equals(piece.getProperty(Properties.NON_MOVABLE))) {
           db.remove(piece);
@@ -1500,7 +1507,8 @@ public class PieceMover extends AbstractBuildable
 
     @Override
     protected double getDeviceScale(DragGestureEvent dge) {
-      // get the OS scaling
+      // Get the OS scaling; note that this is _probably_ running only on
+      // Windows.
       final Graphics2D g2d = (Graphics2D) dge.getComponent().getGraphics();
       final double os_scale = g2d.getDeviceConfiguration().getDefaultTransform().getScaleX();
       g2d.dispose();
@@ -1515,6 +1523,13 @@ public class PieceMover extends AbstractBuildable
     @Override
     protected int getOffsetMult() {
       return 1;
+    }
+
+    @Override
+    protected double getDeviceScale(DragGestureEvent dge) {
+      // Retina Macs account for the device scaling for the drag icon, so
+      // we don't have to.
+      return 1.0;
     }
   }
 }

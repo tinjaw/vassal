@@ -55,11 +55,11 @@ public class KeyBuffer {
     }
     return theBuffer;
   }
-  
+
   public void setClickPoint(Point p) {
     clickPoint.setLocation(p);
   }
-  
+
   public Point getClickPoint() {
     return clickPoint;
   }
@@ -74,7 +74,7 @@ public class KeyBuffer {
   }
 
   public void clear() {
-    for (GamePiece p : pieces) {
+    for (final GamePiece p : pieces) {
       p.setProperty(Properties.SELECTED, null);
     }
     pieces.clear();
@@ -108,10 +108,10 @@ public class KeyBuffer {
 
     // Copy contents into new list, because contents may change
     // as a result of key commands
-    ArrayList<GamePiece> targets = new ArrayList<>(pieces);
+    final ArrayList<GamePiece> targets = new ArrayList<>(pieces);
     // Reverse the order if this is a "Move Up" or "Move to Bottom" keystroke
-    if (targets.size() > 0) {
-      GamePiece top = targets.get(0);
+    if (!targets.isEmpty()) {
+      final GamePiece top = targets.get(0);
       if (top.getMap() != null) {
         if (stroke.equals(top.getMap().getStackMetrics().getMoveBottomKey())
             || stroke.equals(top.getMap().getStackMetrics().getMoveUpKey())) {
@@ -119,10 +119,10 @@ public class KeyBuffer {
         }
       }
     }
-    for (GamePiece p : targets) {
+    for (final GamePiece p : targets) {
       bounds.addPiece(p);
       p.setProperty(Properties.SNAPSHOT, ((PropertyExporter) p).getProperties()); // save state prior to command
-      
+
       // Send most recent click point location
       if (p instanceof PersistentPropertyContainer) {
         comm = comm.append(((PersistentPropertyContainer) p).setPersistentProperty(BasicPiece.CLICKED_X, String.valueOf(clickPoint.x)))

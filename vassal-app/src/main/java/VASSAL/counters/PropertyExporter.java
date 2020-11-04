@@ -9,17 +9,19 @@ import VASSAL.build.module.properties.PropertySource;
 
 public interface PropertyExporter extends PropertyNameSource, PropertySource {
 
-  String LOCALIZED_NAME = "localizedName";
+  String LOCALIZED_NAME = "localizedName"; // NON-NLS
 
   default Map<String, Object> getProperties() {
     final List<String> propertyNames = getPropertyNames();
-    java.util.Map<String, Object> result = new HashMap<>();
-    for (String propertyName : propertyNames) {
+    final Map<String, Object> result = new HashMap<>();
+    for (final String propertyName : propertyNames) {
       result.put(propertyName, getLocalizedProperty(propertyName));
     }
 
     if (this instanceof GamePiece) {
+      PieceAccess.GlobalAccess.hideAll(); // Force masked pieces to be hidden from me to generate correct masked name
       result.put(LOCALIZED_NAME, ((GamePiece) this).getLocalizedName());
+      PieceAccess.GlobalAccess.revertAll();
     }
     return result;
   }

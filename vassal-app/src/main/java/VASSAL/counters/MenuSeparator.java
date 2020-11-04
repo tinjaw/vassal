@@ -43,7 +43,7 @@ public class MenuSeparator extends Decorator implements TranslatablePiece {
   protected KeyCommand[] command;
   protected String desc;
   protected NamedKeyStroke key;
-  protected KeyCommand separatorCommand;    
+  protected KeyCommand separatorCommand;
 
   public MenuSeparator() {
     this(ID + ";", null);
@@ -57,7 +57,7 @@ public class MenuSeparator extends Decorator implements TranslatablePiece {
   @Override
   public void mySetType(String type) {
     type = type.substring(ID.length());
-    SequenceEncoder.Decoder st = new SequenceEncoder.Decoder(type, ';');
+    final SequenceEncoder.Decoder st = new SequenceEncoder.Decoder(type, ';');
     desc        = st.nextToken();
     key         = st.nextNamedKeyStroke(null);
     command     = null;
@@ -65,7 +65,7 @@ public class MenuSeparator extends Decorator implements TranslatablePiece {
 
   @Override
   public String myGetType() {
-    SequenceEncoder se = new SequenceEncoder(';');
+    final SequenceEncoder se = new SequenceEncoder(';');
     se.append(desc).append(key);
     return ID + se.getValue();
   }
@@ -89,7 +89,7 @@ public class MenuSeparator extends Decorator implements TranslatablePiece {
 
   @Override
   public Command myKeyEvent(KeyStroke stroke) {
-    return null; // We don't ever actually "do" anything to the game state, we're just here to mark a menu separator 
+    return null; // We don't ever actually "do" anything to the game state, we're just here to mark a menu separator
   }
 
   @Override
@@ -129,7 +129,7 @@ public class MenuSeparator extends Decorator implements TranslatablePiece {
   @Override
   public boolean testEquals(Object o) {
     if (! (o instanceof MenuSeparator)) return false;
-    MenuSeparator c = (MenuSeparator) o;
+    final MenuSeparator c = (MenuSeparator) o;
     if (!Objects.equals(desc, c.desc)) return false;
     return Objects.equals(key, c.key);
   }
@@ -155,7 +155,7 @@ public class MenuSeparator extends Decorator implements TranslatablePiece {
       controls.add("Editor.MenuSeparator.if_hidden", keyInput);
     }
 
-    
+
     @Override
     public Component getControls() {
       return controls;
@@ -163,7 +163,7 @@ public class MenuSeparator extends Decorator implements TranslatablePiece {
 
     @Override
     public String getType() {
-      SequenceEncoder se = new SequenceEncoder(';');
+      final SequenceEncoder se = new SequenceEncoder(';');
       se.append(descInput.getValueString()).append(keyInput.getValueString());
       return ID + se.getValue();
     }

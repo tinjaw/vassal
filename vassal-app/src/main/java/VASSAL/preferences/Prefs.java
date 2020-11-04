@@ -55,10 +55,10 @@ public class Prefs implements Closeable {
 
   private static Prefs globalPrefs;
 
-  private Map<String, Configurer> options = new HashMap<>();
-  private Properties storedValues = new Properties();
-  private PrefsEditor editor;
-  private File file;
+  private final Map<String, Configurer> options = new HashMap<>();
+  private final Properties storedValues = new Properties();
+  private final PrefsEditor editor;
+  private final File file;
 
   public Prefs(PrefsEditor editor, String name) {
     this(editor, new File(Info.getPrefsDir(), sanitize(name)));
@@ -70,7 +70,7 @@ public class Prefs implements Closeable {
 
     read();
 
-    for (String key : storedValues.stringPropertyNames()) {
+    for (final String key : storedValues.stringPropertyNames()) {
       final String value = storedValues.getProperty(key);
       final Configurer c = options.get(key);
       if (c != null) {
@@ -205,28 +205,26 @@ public class Prefs implements Closeable {
 
     try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
       final FileChannel ch = raf.getChannel();
+      try (FileLock lock = ch.lock()) {
+        // read the old key-value pairs
+        final InputStream in = Channels.newInputStream(ch);
+        storedValues.load(in);
 
-      // lock the prefs file
-      final FileLock lock = ch.lock();
-
-      // read the old key-value pairs
-      final InputStream in = Channels.newInputStream(ch);
-      storedValues.load(in);
-
-      // merge in the current key-value pairs
-      for (Configurer c : options.values()) {
-        final String val = c.getValueString();
-        if (val != null) {
-          storedValues.put(c.getKey(), val);
+        // merge in the current key-value pairs
+        for (final Configurer c : options.values()) {
+          final String val = c.getValueString();
+          if (val != null) {
+            storedValues.put(c.getKey(), val);
+          }
         }
-      }
 
-      // write back the key-value pairs
-      ch.truncate(0);
-      ch.position(0);
-      final OutputStream out = Channels.newOutputStream(ch);
-      storedValues.store(out, null);
-      out.flush();
+        // write back the key-value pairs
+        ch.truncate(0);
+        ch.position(0);
+        final OutputStream out = Channels.newOutputStream(ch);
+        storedValues.store(out, null);
+        out.flush();
+      }
     }
     // channel and streams closed, lock released
   }

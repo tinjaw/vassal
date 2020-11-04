@@ -15,23 +15,19 @@
  * License along with this library; if not, copies are available
  * at http://www.opensource.org.
  */
-/*
- * Created by IntelliJ IDEA.
- * User: rkinney
- * Date: Sep 25, 2002
- * Time: 10:43:11 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package VASSAL.build.module.map;
 
+import VASSAL.configure.GlobalCommandTargetConfigurer;
 import VASSAL.configure.TranslatableStringEnum;
 import VASSAL.configure.TranslatingStringEnumConfigurer;
+import VASSAL.counters.CounterGlobalKeyCommand;
+import VASSAL.counters.GlobalCommandTarget;
 import java.awt.Component;
 import java.awt.Window;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import javax.swing.Box;
@@ -54,6 +50,7 @@ import VASSAL.configure.NamedHotKeyConfigurer;
 import VASSAL.configure.PlayerIdFormattedStringConfigurer;
 import VASSAL.configure.PropertyExpression;
 import VASSAL.configure.StringArrayConfigurer;
+import VASSAL.configure.VisibilityCondition;
 import VASSAL.counters.BooleanAndPieceFilter;
 import VASSAL.counters.Decorator;
 import VASSAL.counters.Embellishment;
@@ -71,6 +68,18 @@ import net.miginfocom.swing.MigLayout;
 /**
  * Adds a button to a map window toolbar. Hitting the button applies a particular key command to all pieces on that map
  * with a given name.
+ *
+ * The "Global Key Command" functionality, as the term is used in Vassal Modules, is spread out over several classes internally:
+ * {@link GlobalCommand} - primary functionality for sending commands to multiple pieces based on matching parameters
+ * {@link VASSAL.build.module.GlobalKeyCommand}         - Global Key Commands from a Module window
+ * {@link VASSAL.build.module.StartupGlobalKeyCommand}  - Global Key Commands from a Module "At Startup"
+ * {@link VASSAL.build.module.map.MassKeyCommand}       - Global Key Commands from a specific Map window
+ * {@link VASSAL.build.module.map.DeckGlobalKeyCommand} - Global Key Commands from a Deck
+ * {@link CounterGlobalKeyCommand}                      - Global Key Commands from a Game Piece
+ *
+ * Other important classes:
+ * {@link GlobalCommandTarget}           - "Fast Match" parameters
+ * {@link GlobalCommandTargetConfigurer} - configurer for "Fast Match" parameters
  */
 public class MassKeyCommand extends AbstractConfigurable
                             implements RecursionLimiter.Loopable {
@@ -107,9 +116,21 @@ public class MassKeyCommand extends AbstractConfigurable
   protected FormattedString reportFormat = new FormattedString();
   protected boolean singleMap = true;
 
+  public static final String TARGET   = "target"; //NON-NLS
+
+  protected GlobalCommandTarget target = new GlobalCommandTarget(getGKCtype());
+
+  /**
+   * @return Our GKC type -- this method is overridden by {@link VASSAL.build.module.GlobalKeyCommand} for module-level GKC's
+   * and by {@link DeckGlobalKeyCommand} for Deck GKC's. This value affects what configurer options are shown.
+   */
+  public GlobalCommandTarget.GKCtype getGKCtype() {
+    return GlobalCommandTarget.GKCtype.MAP;
+  }
+
   public MassKeyCommand() {
-    ActionListener al = e -> apply();
-    launch = new LaunchButton("CTRL", TOOLTIP, BUTTON_TEXT, HOTKEY, ICON, al); // NON-NLS
+    final ActionListener al = e -> apply();
+    launch = new LaunchButton(Resources.getString("Editor.GlobalKeyCommand.button_name"), TOOLTIP, BUTTON_TEXT, HOTKEY, ICON, al);
   }
 
   @Override
@@ -130,12 +151,12 @@ public class MassKeyCommand extends AbstractConfigurable
   public void apply() {
     buildFilter();
     if (singleMap) {
-      GameModule.getGameModule().sendAndLog(globalCommand.apply(map, getFilter()));
+      GameModule.getGameModule().sendAndLog(globalCommand.apply(map, getFilter(), target));
     }
     else {
       final List<Map> l = Map.getMapList();
       GameModule.getGameModule().sendAndLog(
-          globalCommand.apply(l.toArray(new Map[0]), getFilter()));
+          globalCommand.apply(l.toArray(new Map[0]), getFilter(), target));
     }
   }
 
@@ -153,34 +174,41 @@ public class MassKeyCommand extends AbstractConfigurable
   public String[] getAttributeDescriptions() {
     if (condition == null) {
       return new String[]{
-        Resources.getString(Resources.DESCRIPTION),
-        Resources.getString("Editor.keyboard_command"), //$NON-NLS-1$
-        Resources.getString("Editor.MassKey.match"), //$NON-NLS-1$
-        Resources.getString("Editor.MassKey.counters"), //$NON-NLS-1$
-        Resources.getString("Editor.MassKey.deck_content"), //$NON-NLS-1$
-        Resources.getString(Resources.BUTTON_TEXT),
-        Resources.getString(Resources.TOOLTIP_TEXT),
-        Resources.getString(Resources.BUTTON_ICON),
-        Resources.getString(Resources.HOTKEY_LABEL),
-        Resources.getString("Editor.MassKey.suppress"), //$NON-NLS-1$
-        Resources.getString("Editor.report_format"), //$NON-NLS-1$
+        Resources.getString(Resources.DESCRIPTION),                             // Description
+        Resources.getString(Resources.BUTTON_TEXT),                             // Button text
+        Resources.getString(Resources.TOOLTIP_TEXT),                            // Button tooltip
+        Resources.getString(Resources.BUTTON_ICON),                             // Button icon
+        Resources.getString(Resources.HOTKEY_LABEL),                            // Hotkey
+
+        Resources.getString("Editor.GlobalKeyCommand.global_key_command"), //$NON-NLS-1$       // Key Command
+        Resources.getString("Editor.MassKey.counters"), //$NON-NLS-1$       // Apply to counters on this map only
+
+        Resources.getString("Editor.GlobalKeyCommand.pre_select"),          // Fast match target info
+
+        Resources.getString("Editor.MassKey.match"), //$NON-NLS-1$          // Match properties        
+        Resources.getString("Editor.GlobalKeyCommand.deck_policy"), //$NON-NLS-1$   // Apply to pieces in deck
+        Resources.getString("Editor.MassKey.suppress"), //$NON-NLS-1$       // Suppress individual reports?
+        Resources.getString("Editor.report_format"), //$NON-NLS-1$          // Report format
       };
     }
     else {
       // Backward compatibility
       return new String[]{
-        Resources.getString(Resources.DESCRIPTION),
-        Resources.getString("Editor.keyboard_command"), //$NON-NLS-1$
-        Resources.getString("Editor.MassKey.match"), //$NON-NLS-1$
-        Resources.getString("Editor.MassKey.counters"), //$NON-NLS-1$
-        Resources.getString("Editor.MassKey.deck_content"), //$NON-NLS-1$
-        Resources.getString(Resources.BUTTON_TEXT),
-        Resources.getString(Resources.TOOLTIP_TEXT),
-        Resources.getString(Resources.BUTTON_ICON),
-        Resources.getString(Resources.HOTKEY_LABEL),
-        Resources.getString("Editor.MassKey.suppress"), //$NON-NLS-1$
-        Resources.getString("Editor.report_format"), //$NON-NLS-1$
-        Resources.getString("Editor.MassKey.apply"), //$NON-NLS-1$
+        Resources.getString(Resources.DESCRIPTION),                             // Description
+        Resources.getString(Resources.BUTTON_TEXT),                             // Button text
+        Resources.getString(Resources.TOOLTIP_TEXT),                            // Button tooltip
+        Resources.getString(Resources.BUTTON_ICON),                             // Button icon
+        Resources.getString(Resources.HOTKEY_LABEL),                            // Hotkey
+        Resources.getString("Editor.MassKey.key"), //$NON-NLS-1$             // Key Command
+        Resources.getString("Editor.MassKey.counters"), //$NON-NLS-1$        // Apply to counters on this map only
+
+        Resources.getString("Editor.GlobalKeyCommand.pre_select"),           // Fast match target info
+
+        Resources.getString("Editor.MassKey.match"), //$NON-NLS-1$           // Match properties
+        Resources.getString("Editor.MassKey.deck_content"), //$NON-NLS-1$    // Apply to pieces in deck
+        Resources.getString("Editor.MassKey.suppress"), //$NON-NLS-1$       // Suppress individual reports?
+        Resources.getString("Editor.report_format"), //$NON-NLS-1$          // Report format
+        Resources.getString("Editor.MassKey.apply"), //$NON-NLS-1$          // Legacy condition
       };
     }
   }
@@ -188,21 +216,24 @@ public class MassKeyCommand extends AbstractConfigurable
   @Override
   public String[] getAttributeNames() {
     return new String[]{
-      NAME,
-      KEY_COMMAND,
-      PROPERTIES_FILTER,
-      SINGLE_MAP,
-      DECK_COUNT,
-      BUTTON_TEXT,
-      TOOLTIP,
-      ICON,
-      HOTKEY,
-      REPORT_SINGLE,
-      REPORT_FORMAT,
-      CONDITION,
-      CHECK_VALUE,
-      CHECK_PROPERTY,
-      AFFECTED_PIECE_NAMES
+      NAME,                                 // Description
+      BUTTON_TEXT,                          // Button text
+      TOOLTIP,                              // Button tooltip
+      ICON,                                 // Button icon
+      HOTKEY,                               // Hotkey
+      KEY_COMMAND,                          // Key Command
+      SINGLE_MAP,                           // Apply to counters on this map only
+
+      TARGET,                               // Fast match target info
+
+      PROPERTIES_FILTER,                    // Match properties
+      DECK_COUNT,                           // Apply to pieces in deck
+      REPORT_SINGLE,                        // Suppress individual reports?
+      REPORT_FORMAT,                        // Report format
+      CONDITION,                            // Legacy condition
+      CHECK_VALUE,                          // NOT DISPLAYED
+      CHECK_PROPERTY,                       // NOT DISPLAYED
+      AFFECTED_PIECE_NAMES                  // NOT DISPLAYED
     };
   }
 
@@ -226,31 +257,37 @@ public class MassKeyCommand extends AbstractConfigurable
   public Class<?>[] getAttributeTypes() {
     if (condition == null) {
       return new Class<?>[]{
-        String.class,
-        NamedKeyStroke.class,
-        PropertyExpression.class,
-        Boolean.class,
-        DeckPolicyConfig.class,
-        String.class,
-        String.class,
-        IconConfig.class,
-        NamedKeyStroke.class,
-        Boolean.class,
-        ReportFormatConfig.class
+        String.class,                       // Description
+        String.class,                       // Button text
+        String.class,                       // Button tooltip
+        IconConfig.class,                   // Button icon
+        NamedKeyStroke.class,               // Hotkey
+        NamedKeyStroke.class,               // Key Command
+        Boolean.class,                      // Apply to counters on this map only
+
+        GlobalCommandTarget.class,          // Fast Match target info
+
+        PropertyExpression.class,           // Match properties
+        DeckPolicyConfig.class,             // Apply to pieces in deck
+        Boolean.class,                      // Suppress individual reports?
+        ReportFormatConfig.class            // Report format
       };
     }
     else {
       // Backward compatibility
       return new Class<?>[]{
         String.class,
-        NamedKeyStroke.class,
-        String.class,
-        Boolean.class,
-        DeckPolicyConfig.class,
         String.class,
         String.class,
         IconConfig.class,
         NamedKeyStroke.class,
+        NamedKeyStroke.class,
+        Boolean.class,
+
+        GlobalCommandTarget.class,
+
+        String.class,
+        DeckPolicyConfig.class,
         Boolean.class,
         ReportFormatConfig.class,
         Prompt.class
@@ -264,16 +301,18 @@ public class MassKeyCommand extends AbstractConfigurable
       return new IconConfigurer(key, name, "/images/keyCommand.gif"); // NON-NLS
     }
   }
+
   public static class ReportFormatConfig implements TranslatableConfigurerFactory {
     @Override
     public Configurer getConfigurer(AutoConfigurable c, String key, String name) {
       return new PlayerIdFormattedStringConfigurer(key, name, new String[0]);
     }
   }
+
   public static class DeckPolicyConfig extends Configurer implements ConfigurerFactory {
-    protected static final String FIXED = "Fixed number of pieces"; // NON-NLS
-    protected static final String NONE = "No pieces"; // NON-NLS
-    protected static final String ALL = "All pieces"; // NON-NLS
+    protected static final String FIXED = "Fixed number of pieces"; //NON-NLS (really)
+    protected static final String NONE = "No pieces"; //NON-NLS (really)
+    protected static final String ALL = "All pieces"; //NON-NLS (really)
     protected IntConfigurer intConfig;
     protected TranslatingStringEnumConfigurer typeConfig;
     protected JLabel prompt;
@@ -282,7 +321,7 @@ public class MassKeyCommand extends AbstractConfigurable
 
 
     public DeckPolicyConfig() {
-      this(true);
+      this(false);
     }
 
     public DeckPolicyConfig(boolean showPrompt) {
@@ -308,14 +347,14 @@ public class MassKeyCommand extends AbstractConfigurable
       controls2.add(typeConfig.getControls());
       controls2.add(intConfig.getControls());
 
-      PropertyChangeListener l = evt -> {
+      final PropertyChangeListener l = evt -> {
         intConfig.getControls().setVisible(FIXED.equals(typeConfig.getValueString()));
-        Window w = SwingUtilities.getWindowAncestor(intConfig.getControls());
+        final Window w = SwingUtilities.getWindowAncestor(intConfig.getControls());
         if (w != null) {
           w.pack();
         }
       };
-      PropertyChangeListener l2 = evt -> setValue(getIntValue());
+      final PropertyChangeListener l2 = evt -> setValue(getIntValue());
       typeConfig.addPropertyChangeListener(l);
       typeConfig.addPropertyChangeListener(l2);
       intConfig.addPropertyChangeListener(l2);
@@ -332,7 +371,7 @@ public class MassKeyCommand extends AbstractConfigurable
     }
 
     public int getIntValue() {
-      String type = typeConfig.getValueString();
+      final String type = typeConfig.getValueString();
       if (ALL.equals(type)) {
         return -1;
       }
@@ -350,7 +389,7 @@ public class MassKeyCommand extends AbstractConfigurable
         typeConfig.setFrozen(true);
         intConfig.setFrozen(true);
         if (o instanceof Integer) {
-          Integer i = (Integer) o;
+          final Integer i = (Integer) o;
           switch (i) {
           case 0:
             typeConfig.setValue(NONE);
@@ -424,6 +463,9 @@ public class MassKeyCommand extends AbstractConfigurable
     else if (SINGLE_MAP.equals(key)) {
       return String.valueOf(singleMap);
     }
+    else if (TARGET.equals(key)) {
+      return target.encode();
+    }
     else {
       return launch.getAttributeValueString(key);
     }
@@ -483,6 +525,11 @@ public class MassKeyCommand extends AbstractConfigurable
   }
 
   @Override
+  public VisibilityCondition getAttributeVisibility(String key) {
+    return () -> true;
+  }
+
+  @Override
   public void setAttribute(String key, Object value) {
     if (DEPRECATED_NAME.equals(key)) {
       setAttribute(NAME, value);
@@ -511,7 +558,7 @@ public class MassKeyCommand extends AbstractConfigurable
       }
       else {
         filter = piece -> {
-          for (String s : names) {
+          for (final String s : names) {
             if (Decorator.getInnermost(piece).getName().equals(s)) {
               return true;
             }
@@ -554,6 +601,19 @@ public class MassKeyCommand extends AbstractConfigurable
       }
       singleMap = ((Boolean) value);
     }
+    else if (TARGET.equals(key)) {
+      if (value instanceof String) {
+        value = new GlobalCommandTarget((String) value);
+      }
+      target = (GlobalCommandTarget) value;
+      target.setGKCtype(getGKCtype());
+
+      // Fast match currently disabled for DGKC's - they already search only their own deck
+      if (getGKCtype() == GlobalCommandTarget.GKCtype.DECK) {
+        target.setFastMatchLocation(false);
+        target.setFastMatchProperty(false);
+      }
+    }
     else {
       launch.setAttribute(key, value);
     }
@@ -572,7 +632,7 @@ public class MassKeyCommand extends AbstractConfigurable
 
   /**
    * {@link VASSAL.search.SearchTarget}
-   * @return a list of the Configurable's string/expression fields if any (for search)
+   * @return a list of the Configurables string/expression fields if any (for search)
    */
   @Override
   public List<String> getExpressionList() {
@@ -604,5 +664,13 @@ public class MassKeyCommand extends AbstractConfigurable
   @Override
   public List<NamedKeyStroke> getNamedKeyStrokeList() {
     return Arrays.asList(NamedHotKeyConfigurer.decode(getAttributeValueString(HOTKEY)), NamedHotKeyConfigurer.decode(getAttributeValueString(KEY_COMMAND)));
+  }
+
+  @Override
+  public void addLocalImageNames(Collection<String> s) {
+    final String string = launch.getAttributeValueString(launch.getIconAttribute());
+    if (string != null) { // Launch buttons sometimes have null icon attributes - yay
+      s.add(string);
+    }
   }
 }
